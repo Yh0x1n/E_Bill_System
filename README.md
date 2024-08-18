@@ -34,16 +34,6 @@ Install everything
 pip install -r requirements.txt
 ```
 
-Install pyqt
-```
-pip install pyside6
-```
-
-pandas
-```
-pip install pandas
-```
-
 ## Run the app
 ```
 python .
