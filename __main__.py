@@ -118,7 +118,6 @@ class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra l
         selec = self.table.selectedItems()
         if selec:
             ref = selec[0].text()
-
             cur = conn.cursor()
 
             #Salta un cuadro de texto para confirmar la eliminación
