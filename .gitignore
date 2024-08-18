@@ -59,3 +59,7 @@ coverage.xml
 
 # Jupyter Notebook
 .ipynb_checkpoints/
+
+# PERSONAL
+
+/myenv
