@@ -8,6 +8,8 @@ import random
 from PySide6 import QtWidgets, QtCore, QtGui
 import os
 
+#TO-DO: Empezar a testear las funciones web
+
 #Clase principal
 class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra los datos del dataframe al iniciar
     def __init__(self):
