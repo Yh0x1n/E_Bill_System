@@ -1,0 +1,6 @@
+sqlite3
+pandas
+sys
+PySide6
+random
+os
