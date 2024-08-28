@@ -8,7 +8,8 @@ import random
 from PySide6 import QtWidgets, QtCore, QtGui
 import os
 
-#TO-DO: Empezar a testear las funciones web
+#Queremos empezara usar Django para crear un backend web para subir archivos a la nube
+#TO-DO: Empezar a testear las funciones web con Django
 
 #Clase principal
 class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra los datos del dataframe al iniciar
