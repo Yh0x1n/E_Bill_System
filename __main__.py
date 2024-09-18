@@ -8,8 +8,7 @@ import random
 from PySide6 import QtWidgets, QtCore, QtGui
 import os
 
-#Queremos empezara usar Django para crear un backend web para subir archivos a la nube
-#TO-DO: Empezar a testear las funciones web con Django
+#Queremos empezar a usar FastAPI para implementar un backend web en el que se puedan subir archivos a la nube
 
 #Clase principal
 class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra los datos del dataframe al iniciar
