@@ -110,17 +110,18 @@ class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra l
                     self.actualizar()
 
     @QtCore.Slot()
-    def borrar (self): #Este método borra un producto seleccionado de la base de datos
+    def borrar(self):  # Este método borra un producto seleccionado de la base de datos
         conn = sqlconn.connect(
-            database = "inventario"
+            database="inventario"
         )
-        #Se obtiene el texto del producto al dar clic
+        cur = conn.cursor()
+
+        # Se obtiene el texto del producto al dar clic
         selec = self.table.selectedItems()
         if selec:
             ref = selec[0].text()
-            cur = conn.cursor()
 
-            #Salta un cuadro de texto para confirmar la eliminación
+            # Salta un cuadro de texto para confirmar la eliminación
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
             msg.setWindowTitle("Advertencia")
@@ -129,20 +130,16 @@ class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra l
             msg.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Cancel)
             result = msg.exec()
             if result == QtWidgets.QMessageBox.StandardButton.Ok:
-                cur.execute(f'DELETE FROM productos WHERE '
-                            f'id = "{ref}"'
-                            f'or nombre = "{ref}"'
-                            f'or precio = "{ref}"'
-                            f'or stock = "{ref}";')
+                cur.execute("DELETE FROM productos WHERE id = ? or nombre = ? or precio = ? or stock = ?", (ref, ref, ref, ref))
                 conn.commit()
 
-            #Se actualiza la tabla automáticamente
-            self.actualizar()
+        # Se actualiza la tabla automáticamente
+        self.actualizar()
 
     @QtCore.Slot()
-    def actualizar (self): #Este método actualiza la tabla automáticamente
+    def actualizar(self):  # Este método actualiza la tabla automáticamente
         conn = sqlconn.connect(
-            database = "inventario"
+            database="inventario"
         )
         df = pd.read_sql('SELECT * FROM productos;', conn)
         self.table.setRowCount(len(df))
@@ -150,53 +147,42 @@ class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra l
         self.table.setHorizontalHeaderLabels(df.columns)
         self.table.setVerticalHeaderLabels(df.index)
 
-        for i in range(len(df)):
-            for j in range(len(df.columns)):
-                self.table.setItem(i, j, QtWidgets.QTableWidgetItem(str(df.iloc[i, j])))
+        for row, data in enumerate(df.itertuples(index=False, name=None)):
+            for col, value in enumerate(data):
+                item = QtWidgets.QTableWidgetItem(str(value))
+                self.table.setItem(row, col, item)
         conn.close()
 
     @QtCore.Slot()
-    def salir (self): #Este método cierra la ventana
-        #Sale un mensaje de confirmación
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-        msg.setWindowTitle("Advertencia")
-        msg.setText("¿Estas seguro de cerrar la aplicación?\nSe perderán todos los datos no guardados.")
-        msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel)
-        msg.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Cancel)
-        result = msg.exec()
-
-        if result == QtWidgets.QMessageBox.StandardButton.Ok:
+    def salir(self):
+        if QtWidgets.QMessageBox.warning(
+            self, "Advertencia", "¿Estas seguro de cerrar la aplicación?\nSe perderán todos los datos no guardados.",
+            QtWidgets.QMessageBox.StandardButton.Ok | QtWidgets.QMessageBox.StandardButton.Cancel,
+            QtWidgets.QMessageBox.StandardButton.Cancel
+        ) == QtWidgets.QMessageBox.StandardButton.Ok:
             sys.exit()
     
     @QtCore.Slot()
-    def exportar(self): #Este método exporta la base de datos a un archivo .xlsx, eligiendo dónde guardarlo
-
-        conn = sqlconn.connect(
-            database = "inventario"
+    def exportar(self):
+        """
+        Exporta la base de datos a un archivo .xlsx, eligiendo dónde guardarlo
+        """
+        conn = sqlconn.connect(database="inventario")
+        options = QtWidgets.QFileDialog.getSaveFileName(
+            self, 'Exportar', '', 'Excel Files (*.xlsx)'
         )
-
-        #Muestra un cuadro de dialogo para elegir la ubicación
-        options = QtWidgets.QFileDialog.getSaveFileName(self, 'Exportar', '', 'Excel Files (*.xlsx)')
-        try:
-            if options[0]:
+        if options[0]:
+            try:
                 df = pd.read_sql('SELECT * FROM productos;', conn)
                 filename, ext = os.path.splitext(options[0])
-            if not ext:
-                ext = '.xlsx'
-            df.to_excel(filename + ext, index=False)
-
-            #Mensaje de confirmación
-            msg = QtWidgets.QMessageBox()
-            msg.setIcon(QtWidgets.QMessageBox.Icon.Information)
-            msg.setWindowTitle("Información")
-            msg.setText("Se ha exportado la base de datos")
-            msg.exec()
-        
-        except sqlconn.Error as e:
-            msg = QtWidgets.QMessageBox()
-            msg.warning(self, 'Error', str(e))
-            
+                if not ext:
+                    ext = '.xlsx'
+                df.to_excel(filename + ext, index=False)
+                QtWidgets.QMessageBox.information(
+                    self, 'Información', 'Se ha exportado la base de datos'
+                )
+            except sqlconn.Error as e:
+                QtWidgets.QMessageBox.warning(self, 'Error', str(e))
         conn.close()
 
 if __name__ == "__main__":
