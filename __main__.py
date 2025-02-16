@@ -1,27 +1,30 @@
 #Aplicación de gestión de inventario utilizando SQL y Pandas
 
 #Importaciones
-import sqlite3 as sql, pandas as pd, os, sys, random
-from PySide6 import QtWidgets, QtCore, QtGui
+import pandas as pd, os, sys, random
+from PySide6.QtWidgets import QMainWindow, QLabel, QApplication, QInputDialog
+from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtCore import Qt
 import reportlab, qrcode, Crypto
 
 #Clase principal
-class App(QtWidgets.QWidget): #Esta clase es la ventana principal, que muestra los datos del dataframe al iniciar
+class MainWindow(QMainWindow): #Aquí van los atributos principales de la ventana
     def __init__(self):
         super().__init__()
+        self.setGeometry(0, 0, 640, 480)
 
-        #Conectar con la base de datos
-        try:
-            conn = sql.connect(
-                #host = "localhost",
-                #user = "root",
-                #passwd = "",
-                database="inventario"
-            )
-            cur = conn.cursor()
-            #Creando la tabla "productos" con sqlite3
-            cur.execute('CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY, nombre TEXT, precio REAL, stock INTEGER);')
-            conn.commit()
-        
-        except sql.Error as e:
-            print(e)
+        label = QLabel("Holi", self)
+        label.setFont(QFont("Roboto", 20))
+        label.setGeometry(0, 0, 640, 480)
+        label.setStyleSheet("color : blue;"
+                            "background-color : gray;")
+        label.setAlignment(Qt.AlignCenter)
+
+def main(): #Función principal, donde se inicia el programa al ser llamada
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
+
+if __name__ == "__main__":
+    main()
