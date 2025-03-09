@@ -123,6 +123,10 @@ class MainWindow(QMainWindow):
         self.profile_pic.setGeometry(20, 20, 75, 75)
         self.setRoundedProfilePic("src/assets/AqualabLogo.jpg")
     
+    def createButtons(self):
+        #TO-DO: Crear los botones y enlaces después de crear la conexión con la base de datos y las demás etiquetas
+        pass
+    
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
         self.dashboard.setFixedSize(self.width() - 300, self.height())
