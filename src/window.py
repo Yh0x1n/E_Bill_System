@@ -1,7 +1,7 @@
 '''
 Script de la ventana principal de la aplicación
 '''
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QStatusBar, QHBoxLayout, QMainWindow, QMenuBar, QMenu, QPushButton, QWidgetAction, QMessageBox, QFrame, QStackedWidget, QSizePolicy
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QStatusBar, QHBoxLayout, QMainWindow, QMenuBar, QMenu, QPushButton, QWidgetAction, QMessageBox, QFrame, QStackedWidget, QSizePolicy, QGridLayout
 from PySide6.QtCore import QTimer, Qt, QPoint, QSize, QRect
 from PySide6.QtGui import QIcon, QAction, QPixmap, QPainter, QBrush, QFontDatabase, QFont
 import os, sys
@@ -11,15 +11,6 @@ from datetime import datetime
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        """font_paths = [
-            os.path.abspath("src/fonts/Archivo-Regular.ttf"),
-            os.path.abspath("src/fonts/Archivo-Bold.ttf"),
-            os.path.abspath("src/fonts/Archivo-Medium.ttf"),
-            os.path.abspath("src/fonts/Archivo-Black.ttf")
-        ]
-        for font_path in font_paths:
-            id = QFontDatabase.addApplicationFont(font_path)
-            if id < 0: print("Error")"""
     
         self.setWindowIcon(QIcon("src/assets/AqualabLogo.jpg"))
         self.initUI()
@@ -32,11 +23,12 @@ class MainWindow(QMainWindow):
         self.createDashboard()  # Asegúrate de crear el dashboard antes de añadirlo al layout
         self.createLabels()
         self.createProfilePic()
+        self.createButtons()
 
         # Se crea el layout principal para colocar los widgets
-        self.mainLayout = QVBoxLayout()
-        self.mainLayout.addWidget(self.sideBar)
-        self.mainLayout.addWidget(self.dashboard)
+        self.mainLayout = QGridLayout()
+        self.mainLayout.addWidget(self.sideBar, 0, 0)
+        self.mainLayout.addWidget(self.dashboard, 0, 1)
         self.setLayout(self.mainLayout)
         
     def createSideBar(self): # Función para crear la barra lateral, ajustable según el tamaño de la ventana
@@ -45,7 +37,6 @@ class MainWindow(QMainWindow):
         self.sideBar.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.sideBar.setMinimumWidth(300)
         self.sideBar.setMaximumWidth(350)
-        self.sideBar.setFixedHeight(self.height())
         
         self.sideLayout = QVBoxLayout(self.sideBar)
         self.sideLayout.setContentsMargins(0, 0, 0, 0)
@@ -61,12 +52,11 @@ class MainWindow(QMainWindow):
         self.dashboard.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.dashboard.setGeometry(300, 0, self.width() - 300, self.height())
 
-        self.dashboardLayout = QVBoxLayout(self.dashboard)
-        self.dashboardLayout.setContentsMargins(0, 0, 0, 0)
+        self.dashboardLayout = QGridLayout(self.dashboard)
+        self.dashboardLayout.setContentsMargins(20, 20, 20, 20)
         self.dashboardLayout.setSpacing(0)
 
         self.dashboard.setLayout(self.dashboardLayout)
-
         self.resizeEvent = self.onResize
 
 
@@ -101,18 +91,32 @@ class MainWindow(QMainWindow):
         self.ver_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         # Etiqueta "Menú principal"
-        self.menu_label = QLabel("Menú principal", self.dashboard)
+        self.menu_label = QLabel("Menú principal")
         self.menu_label.setFont(QFont("Archivo Black", 32))
         self.menu_label.setStyleSheet("color: black;")
-        self.menu_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.menu_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.menu_label.setContentsMargins(0, 0, 0, 0)
+        self.menu_label.setAlignment(Qt.AlignLeft)
+        self.dashboardLayout.setRowStretch(0, 0)
+        self.dashboardLayout.addWidget(self.menu_label, 0, 0)
 
-        #Etiqueta "Resumen", que va justo debajo de "Menú principal"
-        self.res_label = QLabel("Resumen", self.dashboard)
+        # Etiqueta "Resumen", que va justo debajo de "Menú principal"
+        self.res_label = QLabel("Resumen")
         self.res_label.setFont(QFont("Archivo Black", 18))
         self.res_label.setStyleSheet("color: black;")
-        self.res_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        self.res_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.res_label.setAlignment(Qt.AlignTop)
+        self.res_label.setContentsMargins(0, 0, 0, 0)
+        self.dashboardLayout.addWidget(self.res_label, 1, 0)
+
+        #Etiqueta "Total de ventas"
+        self.total_label = QLabel("Total de ventas:")
+        self.total_label.setFont(QFont("Archivo Black", 16))
+        self.total_label.setStyleSheet("color: black;")
+        self.dashboardLayout.addWidget(self.total_label, 1, 2)
+
+        self.money = QLabel("$0.00")
+        self.money.setFont(QFont("Archivo Medium", 16))
+        self.money.setStyleSheet("color: blue;")
+        self.dashboardLayout.addWidget(self.money, 2, 2)
 
     def createProfilePic(self):
         # Etiqueta para mostrar la foto de perfil del usuario
@@ -124,9 +128,60 @@ class MainWindow(QMainWindow):
         self.setRoundedProfilePic("src/assets/AqualabLogo.jpg")
     
     def createButtons(self):
-        #TO-DO: Crear los botones y enlaces después de crear la conexión con la base de datos y las demás etiquetas
-        pass
-    
+        # Crear un widget para contener el layout de botones
+        self.buttonWidget = QWidget()
+        self.buttonLayout = QGridLayout(self.buttonWidget)
+        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonLayout.setSpacing(10)
+        self.buttonLayout.setAlignment(Qt.AlignBottom | Qt.AlignRight)
+        self.dashboardLayout.addWidget(self.buttonWidget, 3, 0, 2, 3)  # Añadir el widget de botones en la fila 2, ocupando 2 columnas
+
+        # Botones del dashboard
+        # TO-DO: COLOCAR ÍCONOS A LOS BOTONES
+        self.btn_facturas = QPushButton("Facturas")
+        self.btn_facturas.setFont(QFont("Archivo Black", 16))
+        self.btn_facturas.setStyleSheet("""background-color: #009345;
+                                            color: white;
+                                            border-radius: 10px;
+                                            text-align: right bottom;
+                                            padding: 15px;""")
+        self.btn_facturas.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.btn_facturas.setMinimumSize(320, 120)
+        self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
+
+        self.btn_clientes = QPushButton("Clientes")
+        self.btn_clientes.setFont(QFont("Archivo Black", 16))
+        self.btn_clientes.setStyleSheet("""background-color: #009345;
+                                            color: white; 
+                                            border-radius: 10px;
+                                            text-align: right bottom;
+                                            padding: 15px;""")
+        self.btn_clientes.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.btn_clientes.setMinimumSize(225, 120)
+        self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
+
+        self.btn_productos = QPushButton("Productos y servicios")
+        self.btn_productos.setFont(QFont("Archivo Black", 16))
+        self.btn_productos.setStyleSheet("""background-color: #009345;
+                                            color: white; 
+                                            border-radius: 10px;
+                                            text-align: right bottom;
+                                            padding: 15px;""")
+        self.btn_productos.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.btn_productos.setMinimumSize(320, 120)
+        self.buttonLayout.addWidget(self.btn_productos, 1, 0)
+
+        self.btn_salir = QPushButton("Salir")
+        self.btn_salir.setFont(QFont("Archivo Black", 16))
+        self.btn_salir.setStyleSheet("""background-color: #E50202;
+                                        color: white; 
+                                        border-radius: 10px;
+                                        text-align: right bottom;
+                                        padding: 15px;""")
+        self.btn_salir.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.btn_salir.setMinimumSize(225, 120)
+        self.buttonLayout.addWidget(self.btn_salir, 1, 1)
+
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
         self.dashboard.setFixedSize(self.width() - 300, self.height())
@@ -136,9 +191,19 @@ class MainWindow(QMainWindow):
         self.email_label.setGeometry(120, 65, self.sideBar.width(), 25)
         self.ver_label.setGeometry(20, self.sideBar.height() - 45, self.sideBar.width(), 20)
         self.date_label.move(self.sideBar.width() - self.date_label.width() - 20, self.sideBar.height() - self.date_label.height() - 70)
-        self.menu_label.setGeometry(20, 35, self.dashboard.width(), 50)
-        self.res_label.setGeometry(25, 90, self.dashboard.width(), 50)
-        
+        self.total_label.setAlignment(Qt.AlignRight | Qt.AlignBottom)
+        self.money.setAlignment(Qt.AlignRight)
+
+        # Ajustar la posición y el tamaño de la foto de perfil
+        self.profile_pic.setGeometry(20, 20, 75, 75)
+
+        # Ajustar el tamaño de los botones
+        self.btn_productos.setMaximumSize(700, 150)
+        self.btn_facturas.setMaximumSize(700, 150)
+        self.btn_clientes.setMaximumSize(self.dashboard.width() // 3 - 10, 150)
+        self.btn_salir.setMaximumSize(self.dashboard.width() // 3 - 10, 150)
+
+
         event.accept()
 
     def setRoundedProfilePic(self, image_path):
