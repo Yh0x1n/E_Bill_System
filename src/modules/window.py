@@ -7,7 +7,6 @@ from PySide6.QtGui import QIcon, QAction, QPixmap, QPainter, QBrush, QFontDataba
 import os, sys
 from datetime import datetime
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -125,7 +124,7 @@ class MainWindow(QMainWindow):
                            "border-radius: 35px;")
         self.profile_pic.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.profile_pic.setGeometry(20, 20, 75, 75)
-        self.setRoundedProfilePic("src/assets/AqualabLogo.jpg")
+        self.setRoundedProfilePic("src/assets/pictures/AqualabLogo.jpg")
     
     def createButtons(self):
         # Crear un widget para contener el layout de botones
@@ -140,44 +139,64 @@ class MainWindow(QMainWindow):
         # TO-DO: COLOCAR ÍCONOS A LOS BOTONES
         self.btn_facturas = QPushButton("Facturas")
         self.btn_facturas.setFont(QFont("Archivo Black", 16))
-        self.btn_facturas.setStyleSheet("""background-color: #009345;
-                                            color: white;
-                                            border-radius: 10px;
-                                            text-align: right bottom;
-                                            padding: 15px;""")
+        self.btn_facturas.setStyleSheet("""QPushButton {
+                                                background-color: #009345;
+                                                color: white;
+                                                border-radius: 10px;
+                                                text-align: right bottom;
+                                                padding: 15px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: darkgreen;
+                                            }""")
         self.btn_facturas.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.btn_facturas.setMinimumSize(320, 120)
         self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
 
         self.btn_clientes = QPushButton("Clientes")
         self.btn_clientes.setFont(QFont("Archivo Black", 16))
-        self.btn_clientes.setStyleSheet("""background-color: #009345;
-                                            color: white; 
-                                            border-radius: 10px;
-                                            text-align: right bottom;
-                                            padding: 15px;""")
+        self.btn_clientes.setStyleSheet("""QPushButton {
+                                                background-color: #009345;
+                                                color: white;
+                                                border-radius: 10px;
+                                                text-align: right bottom;
+                                                padding: 15px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: darkgreen;
+                                            }""")
         self.btn_clientes.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.btn_clientes.setMinimumSize(225, 120)
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
 
         self.btn_productos = QPushButton("Productos y servicios")
         self.btn_productos.setFont(QFont("Archivo Black", 16))
-        self.btn_productos.setStyleSheet("""background-color: #009345;
-                                            color: white; 
-                                            border-radius: 10px;
-                                            text-align: right bottom;
-                                            padding: 15px;""")
+        self.btn_productos.setStyleSheet("""QPushButton {
+                                                background-color: #009345;
+                                                color: white;
+                                                border-radius: 10px;
+                                                text-align: right bottom;
+                                                padding: 15px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: darkgreen;
+                                            }""")
         self.btn_productos.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.btn_productos.setMinimumSize(320, 120)
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
 
         self.btn_salir = QPushButton("Salir")
         self.btn_salir.setFont(QFont("Archivo Black", 16))
-        self.btn_salir.setStyleSheet("""background-color: #E50202;
-                                        color: white; 
-                                        border-radius: 10px;
-                                        text-align: right bottom;
-                                        padding: 15px;""")
+        self.btn_salir.setStyleSheet("""QPushButton {
+                                                background-color: #E50202;
+                                                color: white;
+                                                border-radius: 10px;
+                                                text-align: right bottom;
+                                                padding: 15px;
+                                            }
+                                            QPushButton:hover {
+                                                background-color: darkred;
+                                            }""")
         self.btn_salir.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.btn_salir.setMinimumSize(225, 120)
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
