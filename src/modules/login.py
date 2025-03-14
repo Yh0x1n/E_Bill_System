@@ -5,8 +5,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QGridLayout, QWidget, Q
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QIcon, QFontDatabase, QPainter, QBrush, QPixmap
 import sys
-import sqlite3 as sql
-from modules.window import MainWindow
+from service import s
+from window import MainWindow
 
 class LoginWindow(QMainWindow):
     def __init__(self):
@@ -170,8 +170,7 @@ class LoginWindow(QMainWindow):
         self.loginLayout.addWidget(self.btn_register, 8, 2, 3, 2, Qt.AlignCenter)
 
     def check_login(self):
-        conn = sql.connect('src/database.db')
-        cursor = conn.cursor()
+        cursor = s.conn.cursor()
         cursor.execute("SELECT * FROM usuario")
         user = cursor.fetchall()
 
@@ -193,7 +192,7 @@ class LoginWindow(QMainWindow):
         self.username = self.username_input.text()
         self.password = self.password_input.text()
 
-        conn = sql.connect('src/database.db')
+        conn = s.connect('src/database.db')
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM usuario WHERE username=? AND password=?", (self.username, self.password))
         result = cursor.fetchone()
