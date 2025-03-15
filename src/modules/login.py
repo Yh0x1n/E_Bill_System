@@ -94,6 +94,7 @@ class LoginWindow(QMainWindow):
         self.email_label.setStyleSheet("""
                                         color: black;
                                         background-color: transparent;
+                                        padding: 5px;
                                         """)
         self.email_label.setContentsMargins(65, 0, 0, 0)
 
@@ -104,6 +105,7 @@ class LoginWindow(QMainWindow):
                                         background-color: white;
                                         border: 1px solid black;
                                         border-radius: 5px;
+                                        padding: 5px;
                                         """)
         
         self.email_input.setFont(QFont("Archivo Medium", 12))
@@ -127,6 +129,7 @@ class LoginWindow(QMainWindow):
                                         background-color: white;
                                         border: 1px solid black;
                                         border-radius: 5px;
+                                        padding: 5px;
                                         """)
         self.password_input.setFont(QFont("Archivo Medium", 12))
         self.password_input.setFixedSize(235, 30)
