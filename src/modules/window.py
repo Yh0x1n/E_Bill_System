@@ -6,8 +6,8 @@ from PySide6.QtCore import QTimer, Qt, QPoint, QSize, QRect
 from PySide6.QtGui import QIcon, QAction, QPixmap, QPainter, QBrush, QFontDatabase, QFont
 import os, sys
 from datetime import datetime
-from buttons import ButtonFactory
-from labels import LabelFactory
+from modules.styles.buttons import ButtonFactory
+from modules.styles.labels import LabelFactory
 
 class MainWindow(QMainWindow):
     def __init__(self):
