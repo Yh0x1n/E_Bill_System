@@ -1,13 +1,13 @@
 '''
 Script de la ventana principal de la aplicación
 '''
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QStatusBar, QHBoxLayout, QMainWindow, QMenuBar, QMenu, QPushButton, QWidgetAction, QMessageBox, QFrame, QStackedWidget, QSizePolicy, QGridLayout, QLayout
-from PySide6.QtCore import QTimer, Qt, QPoint, QSize, QRect
-from PySide6.QtGui import QIcon, QAction, QPixmap, QPainter, QBrush, QFontDatabase, QFont
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QFrame, QSizePolicy, QGridLayout, QLayout
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 import os, sys
 from datetime import datetime
-from modules.styles.buttons import ButtonFactory
-from modules.styles.labels import LabelFactory
+from styles.buttons import ButtonFactory
+from styles.labels import LabelFactory
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -98,46 +98,45 @@ class MainWindow(QMainWindow):
 
     def createLabels(self): # Etiquetas responsivas y adaptables según el tamaño de la ventana
         # Etiqueta de usuario
-        label_factory = LabelFactory()
+        label = LabelFactory()
 
         # Etiqueta de usuario
-        self.user_label = label_factory.create_label("Usuario", font="Archivo Black", style="bold_white", font_size=20)
+        self.user_label = label.create_label("Usuario", font="Archivo Black", style="bold_white", font_size=20)
         self.user_label.setStyleSheet(self.user_label.styleSheet())
         self.sideTopLayout.addWidget(self.user_label, 0, 1, 3, 5, Qt.AlignCenter)
 
         # Etiqueta de correo electrónico
-        self.email_label = label_factory.create_label("Correo electrónico", font= "Archivo Medium", style="medium_white", font_size=10)
+        self.email_label = label.create_label("Correo electrónico", font= "Archivo Medium", style="medium_white", font_size=10)
         self.sideTopLayout.addWidget(self.email_label, 2, 1, 3, 5, Qt.AlignCenter)
 
         # Etiqueta de la fecha
-        self.date_label = label_factory.create_label("", font="Archivo Medium", style="medium_white", font_size=14)
+        self.date_label = label.create_label("", font="Archivo Medium", style="medium_white", font_size=14)
         self.sideMidLowLayout.addWidget(self.date_label, 0, Qt.AlignBottom | Qt.AlignRight)
 
         # Etiqueta de la versión del programa
-        self.ver_label = label_factory.create_label("V1.0", font="Archivo Medium", style="medium_white", font_size=14)
+        self.ver_label = label.create_label("V1.0", font="Archivo Medium", style="medium_white", font_size=14)
         self.ver_label.setStyleSheet(self.ver_label.styleSheet())
         self.sideBottomLayout.addWidget(self.ver_label, 0, Qt.AlignBottom | Qt.AlignLeft)
 
         # Etiqueta "Menú principal"
-        self.menu_label = label_factory.create_label("Menú principal",font="Archivo Black", style="bold_black", font_size=32)
+        self.menu_label = label.create_label("Menú principal",font="Archivo Black", style="bold_black", font_size=32)
         self.menu_label.setAlignment(Qt.AlignLeft)
         self.dashboardHeader.addWidget(self.menu_label, 0, 0, 1, 5)
 
         # Etiqueta "Resumen", que va justo debajo de "Menú principal"
-        self.res_label = label_factory.create_label("Resumen",font="Archivo Black", style="bold_black", font_size=18)
+        self.res_label = label.create_label("Resumen",font="Archivo Black", style="bold_black", font_size=18)
         self.res_label.setAlignment(Qt.AlignTop)
         self.dashboardHeader.addWidget(self.res_label, 1, 0, 1, 3)
 
         # Etiqueta "Total de ventas"
-        self.total_label = label_factory.create_label("Total de ventas", font="Archivo Medium", style="medium_black", font_size=16)
+        self.total_label = label.create_label("Total de ventas", font="Archivo Medium", style="medium_black", font_size=16)
         self.dashboardMidLayout.addWidget(self.total_label, Qt.AlignRight | Qt.AlignBottom)
 
-        self.money = label_factory.create_label("$0.00", font="Archivo Medium", style="money", font_size=24)
+        self.money = label.create_label("$0.00", font="Archivo Medium", style="money", font_size=24)
         self.dashboardMidLayout.addWidget(self.money, Qt.AlignRight | Qt.AlignBottom)
-
     
     def createButtons(self):
-        button_factory = ButtonFactory()
+        button = ButtonFactory()
 
         # Widget para contener el layout de botones
         self.buttonWidget = QWidget()
@@ -148,23 +147,23 @@ class MainWindow(QMainWindow):
         self.dashboardBottomLayout.addWidget(self.buttonWidget)  # Añadir el widget de botones en la fila 2, ocupando 2 columnas
 
         # BOTONES DE LA SIDEBAR
-        self.btn_logout = button_factory.create_button("Cerrar sesión", style="logout", font_size=14, min_size=(0, 0))
+        self.btn_logout = button.create_button("Cerrar sesión", style="logout", font_size=14, min_size=(0, 0))
         self.sideBottomLayout.addWidget(self.btn_logout, 0, Qt.AlignBottom | Qt.AlignRight)
 
-        self.btn_ventas = button_factory.create_button("Tus últimas ventas", style="sales", font_size=14, min_size=(200, 0))
+        self.btn_ventas = button.create_button("Tus últimas ventas", style="sales", font_size=14, min_size=(200, 0))
         self.sideMidTopLayout.addWidget(self.btn_ventas, 0, Qt.AlignLeft)
 
         # BOTONES DEL DASHBOARD
-        self.btn_facturas = button_factory.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
+        self.btn_facturas = button.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
         self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
 
-        self.btn_clientes = button_factory.create_button("Clientes", icon_path="src/assets/icons/Briefcase.png")
+        self.btn_clientes = button.create_button("Clientes", icon_path="src/assets/icons/Briefcase.png")
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
 
-        self.btn_productos = button_factory.create_button("Productos y servicios", icon_path="src/assets/icons/dollarSign.png")
+        self.btn_productos = button.create_button("Productos y servicios", icon_path="src/assets/icons/dollarSign.png")
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
 
-        self.btn_salir = button_factory.create_button("Salir", style="exit", icon_path="src/assets/icons/Xsquare.png")
+        self.btn_salir = button.create_button("Salir", style="exit", icon_path="src/assets/icons/Xsquare.png")
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
         self.btn_salir.clicked.connect(self.close_window)
 

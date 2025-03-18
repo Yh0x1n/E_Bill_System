@@ -2,9 +2,10 @@ from PySide6.QtWidgets import QPushButton, QHBoxLayout, QLabel, QSizePolicy
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt
 
-class ButtonFactory:
+class ButtonFactory(QPushButton, QLabel):
     def __init__(self):
         self.button_styles = {
+
             "default": """QPushButton {
                             background-color: #009345;
                             color: white;
@@ -15,6 +16,19 @@ class ButtonFactory:
                         QPushButton:hover {
                             background-color: #006A32;
                         }""",
+            
+            "login/register": """
+                                QPushButton {
+                                    color: white;
+                                    background-color: blue;
+                                    border-radius: 15px;
+                                    padding: 10px;
+                                    font-family: "Archivo Medium";
+                                }
+                                QPushButton:hover {
+                                    background-color: darkblue;
+                                }
+                         """,
             
             "sales": """QPushButton{
                             background-color: transparent;
@@ -60,7 +74,6 @@ class ButtonFactory:
             icon_label.setStyleSheet("background: transparent;")
             button.setLayout(QHBoxLayout())
             button.layout().addWidget(icon_label, 0, icon_position)
-
 
         return button
 
