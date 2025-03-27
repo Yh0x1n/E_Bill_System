@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
         [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
-    
+
     def initUI(self):
         [method() for method in (self.createSideBar, self.createDashboard, self.createProfilePic, self.createLabels, self.createButtons)]
 
@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
                 self.ventasLayout.setSpacing(5)
                 self.sideMidTopLayout.addWidget(self.ventasWidget)
 
-                from service import s  # Importar el módulo de base de datos
+                from modules.service import s  # Importar el módulo de base de datos
                 facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
 
                 # Mostrar las facturas en etiquetas

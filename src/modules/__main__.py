@@ -2,7 +2,7 @@
 #Importaciones
 from PySide6.QtWidgets import QApplication, QMainWindow
 import sys
-from modules.login import LoginWindow
+from login import LoginWindow
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
