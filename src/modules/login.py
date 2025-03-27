@@ -17,10 +17,8 @@ class LoginWindow(QMainWindow):
         self.setWindowTitle("FastInvoice - Login")
         self.setFixedSize(640, 480)
         self.setStyleSheet("""background-color: white;""")
-        self.initUI()
-        self.initLabels()
-        self.initButtons()
-        self.check_login()
+        for init_method in (self.initUI, self.initLabels, self.initButtons, self.check_login): #Inicialización de métodos
+            init_method()
         
     def initUI(self):
         self.foregrd = QFrame(self)
@@ -178,7 +176,8 @@ class LoginWindow(QMainWindow):
 
         if result:
             self.close()
-            self.main_window = MainWindow()
+            username, email = result[1], result[2]  # Extrae el usuario y el correo electrónico del resultado de la consulta
+            self.main_window = MainWindow(username, email)
             self.main_window.show()
         else:
             error_msg = msg.create_msg_box("warning", "Error", "Usuario o contraseña incorrectos.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
@@ -229,8 +228,6 @@ class LoginWindow(QMainWindow):
                 error_msg = msg.create_msg_box("warning", "Error", f"Error al registrar usuario: {str(e)}",
                                                QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                 error_msg.exec()
-        
-
     
     def back_to_register(self):
         #Este método hace que el usuario retorne a la pantalla de registro, apareciendo de nuevo el campo de texto de correo electrónico

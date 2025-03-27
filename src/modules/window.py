@@ -1,30 +1,25 @@
 '''
 Script de la ventana principal de la aplicación
 '''
-from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QFrame, QSizePolicy, QGridLayout, QLayout
+from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QMessageBox, QFrame, QSizePolicy, QGridLayout, QLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
 import os, sys
 from datetime import datetime
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
-
+from styles.msg_boxes import MsgBoxFactory
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, username, email):
         super().__init__()
     
         self.setWindowIcon(QIcon("src/assets/AqualabLogo.jpg"))
-        self.initUI()
-        self.initDateTime()
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
+        [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
     
     def initUI(self):
-        self.createSideBar()
-        self.createDashboard()  # Asegúrate de crear el dashboard antes de añadirlo al layout
-        self.createProfilePic()
-        self.createLabels()
-        self.createButtons()
+        [method() for method in (self.createSideBar, self.createDashboard, self.createProfilePic, self.createLabels, self.createButtons)]
 
         # Se crea el layout principal para colocar los widgets
         self.mainLayout = QGridLayout()
@@ -149,9 +144,20 @@ class MainWindow(QMainWindow):
         # BOTONES DE LA SIDEBAR
         self.btn_logout = button.create_button("Cerrar sesión", style="logout", font_size=14, min_size=(0, 0))
         self.sideBottomLayout.addWidget(self.btn_logout, 0, Qt.AlignBottom | Qt.AlignRight)
+        self.btn_logout.clicked.connect(self.logout)
 
         self.btn_ventas = button.create_button("Tus últimas ventas", style="sales", font_size=14, min_size=(200, 0))
         self.sideMidTopLayout.addWidget(self.btn_ventas, 0, Qt.AlignLeft)
+        self.btn_ventas.clicked.connect(self.display_ventas)
+
+        self.btn_gestionar_facturas = button.create_button("Gestionar facturas", style = "sales", font_size=14, min_size=(200,0))
+        self.sideMidTopLayout.addWidget(self.btn_gestionar_facturas, 0, Qt.AlignLeft)
+        
+        self.btn_ayuda = button.create_button("Ayuda", style = "sales", font_size=14, min_size=(100,0))
+        self.sideMidTopLayout.addWidget(self.btn_ayuda, 0, Qt.AlignLeft)
+
+        self.btn_about = button.create_button("Acerca de", style = "sales", font_size=14, min_size=(130,0))
+        self.sideMidTopLayout.addWidget(self.btn_about, 0, Qt.AlignLeft)
 
         # BOTONES DEL DASHBOARD
         self.btn_facturas = button.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
@@ -199,10 +205,62 @@ class MainWindow(QMainWindow):
         rounded.setMask(mask.createMaskFromColor(Qt.transparent, Qt.MaskInColor))
 
         self.profile_pic.setPixmap(rounded)
+    
+    def logout(self):
+        from login import LoginWindow
 
+        q = MsgBoxFactory()
+        response = q.create_question_box("question", "Información", "¿Quieres cerrar sesión?", QMessageBox.Information, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
+        response.exec()
+        if response.clickedButton().text() == "Sí":  # Verifica si el botón "Sí" fue presionado
+            self.close()
+            self.login_window = LoginWindow()
+            self.login_window.show()
+
+    def display_ventas(self):
+        # Método que alterna entre mostrar y ocultar las últimas facturas
+        if hasattr(self, 'ventasWidget') and self.ventasWidget.isVisible():
+            # Si las facturas están visibles, ocultarlas y mostrar los botones originales
+            self.ventasWidget.setVisible(False)
+            self.sideMidTopLayout.removeWidget(self.ventasWidget)
+            for i in range(self.sideMidTopLayout.count()):
+                widget = self.sideMidTopLayout.itemAt(i).widget()
+                if widget and widget != self.btn_ventas:
+                    widget.show()
+        else:
+            # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
+            for i in range(self.sideMidTopLayout.count()):
+                widget = self.sideMidTopLayout.itemAt(i).widget()
+                if widget and widget != self.btn_ventas:
+                    widget.hide()
+
+            if not hasattr(self, 'ventasWidget'):
+                # Crear un nuevo widget para mostrar las facturas si no existe
+                self.ventasWidget = QWidget()
+                self.ventasLayout = QVBoxLayout(self.ventasWidget)
+                self.ventasLayout.setContentsMargins(0, 0, 0, 0)
+                self.ventasLayout.setSpacing(5)
+                self.sideMidTopLayout.addWidget(self.ventasWidget)
+
+                from service import s  # Importar el módulo de base de datos
+                facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
+
+                # Mostrar las facturas en etiquetas
+                for factura in facturas:
+                    factura_label = QLabel(f"Factura #{factura['id']}: {factura['cliente']} - ${factura['total']}")
+                    factura_label.setStyleSheet("font-size: 14px; color: black;")
+                    self.ventasLayout.addWidget(factura_label)
+            self.sideMidTopLayout.addWidget(self.ventasWidget)
+            self.ventasWidget.setVisible(True)
+            self.ventasWidget.setVisible(True)
     def initDateTime(self): # Función para mostrar la fecha actual
         now = datetime.now()
         self.date_label.setText(now.strftime("%d/%m/%Y"))
+    
+    def initUser(self, username, email):
+        # Mostrar el usuario que inició sesión
+        self.user_label.setText(username)
+        self.email_label.setText(email)
     
     def close_window(self):
         self.close()

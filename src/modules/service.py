@@ -72,6 +72,10 @@ class Service: # Clase que realiza la conexión a la DB
     def delete_data(self, id): #Elimina datos
         pass
 
+    def get_last_facturas(self):
+        self.cur.execute("SELECT * FROM facturas ORDER BY id_factura DESC LIMIT 5")
+        return self.cur.fetchall()
+    
     def close(self): #Cierra la conexión
         self.conn.close()
 
