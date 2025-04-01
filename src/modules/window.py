@@ -242,7 +242,7 @@ class MainWindow(QMainWindow):
                 self.ventasLayout.setSpacing(5)
                 self.sideMidTopLayout.addWidget(self.ventasWidget)
 
-                from modules.service import s  # Importar el módulo de base de datos
+                from service import s  # Importar el módulo de base de datos
                 facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
 
                 # Mostrar las facturas en etiquetas

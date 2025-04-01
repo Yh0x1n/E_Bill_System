@@ -151,6 +151,7 @@ class LoginWindow(QMainWindow):
         self.loginLayout.addWidget(self.btn_register, 8, 2, 3, 2, Qt.AlignCenter)
 
     def check_login(self):
+
         s.cur.execute("SELECT * FROM usuario")
         user = s.cur.fetchall()
 
@@ -158,8 +159,12 @@ class LoginWindow(QMainWindow):
             self.btn_login.setEnabled(True)
             self.email_label.hide()
             self.email_input.hide()
+            
             self.btn_login.clicked.connect(self.login)
             self.btn_register.clicked.connect(self.back_to_register)
+            
+            self.username_input.returnPressed.connect(self.login)
+            self.password_input.returnPressed.connect(self.login)
             
         else:
             self.btn_login.setEnabled(False)
@@ -235,7 +240,7 @@ class LoginWindow(QMainWindow):
         self.email_input.show()
         self.btn_register.clicked.connect(self.register)
 
-def closeEvent(self,event):
+def closeEvent(event):
     s.conn.close()
     event.accept()
 
