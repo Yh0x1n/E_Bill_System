@@ -9,6 +9,7 @@ from datetime import datetime
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
+
 class MainWindow(QMainWindow):
     def __init__(self, username, email):
         super().__init__()
@@ -17,7 +18,7 @@ class MainWindow(QMainWindow):
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
         [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
-
+    
     def initUI(self):
         [method() for method in (self.createSideBar, self.createDashboard, self.createProfilePic, self.createLabels, self.createButtons)]
 
@@ -165,6 +166,7 @@ class MainWindow(QMainWindow):
 
         self.btn_clientes = button.create_button("Clientes", icon_path="src/assets/icons/Briefcase.png")
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
+        self.btn_clientes.clicked.connect(self.toggle_client_frame)
 
         self.btn_productos = button.create_button("Productos y servicios", icon_path="src/assets/icons/dollarSign.png")
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
@@ -172,6 +174,45 @@ class MainWindow(QMainWindow):
         self.btn_salir = button.create_button("Salir", style="exit", icon_path="src/assets/icons/Xsquare.png")
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
         self.btn_salir.clicked.connect(self.close_window)
+
+        self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
+        self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
+
+    def toggle_client_frame(self):
+        # Alternar entre el contenido actual y el frame de clientes
+        if not hasattr(self, 'clientsFrame'):
+            from clients import Client
+            self.clientsFrame = Client(self.dashboard)
+            self.dashboardMidLayout.addWidget(self.clientsFrame)
+
+        if not hasattr(self, 'backButton'):
+            button = ButtonFactory()
+            self.backButton = button.create_button("Volver", style="default_black", font_size=14)
+            self.backButton.clicked.connect(self.toggle_client_frame)
+            self.dashboardMidLayout.addWidget(self.backButton, 0, Qt.AlignBottom | Qt.AlignLeft)
+
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+
+        if self.clientsFrame.isVisible():
+            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
+            self.clientsFrame.setVisible(False)
+            self.backButton.setVisible(False)
+
+            for element in dashboard_elements:
+                element.setVisible(True)
+        else:
+            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
+            self.clientsFrame.setVisible(True)
+            self.backButton.setVisible(True)
+
+            for element in dashboard_elements:
+                element.setVisible(False)
+
+    def toggle_create_invoices_frame(self):
+        pass
+
+    def toggle_products_frame(self):
+        pass
 
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())

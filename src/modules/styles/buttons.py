@@ -58,7 +58,13 @@ class ButtonFactory(QPushButton, QLabel):
                         }
                         QPushButton:hover {
                             background-color: #8D0000;
-                        }"""
+                        }""",
+            "default_black": """QPushButton{
+                            color: black;
+                            font-family: "Archivo Medium";
+                            background-color: transparent;
+                        }
+                        """
         }
 
     def create_button(self, text, style="default", icon_path=None, font_size=16, min_size=(295, 150), icon_position = Qt.AlignCenter):
