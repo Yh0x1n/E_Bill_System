@@ -1,5 +1,5 @@
 """
-Script que contiene los estilos de los mensajes de notificación al realizar una acción
+Módulo que administra los estilos y creación de los mensajes de notificación.
 """
 
 from PySide6.QtWidgets import QMessageBox, QPushButton, QLabel

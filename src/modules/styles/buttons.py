@@ -1,3 +1,7 @@
+"""
+Módulo que administra el aspecto y creación de los botones.
+"""
+
 from PySide6.QtWidgets import QPushButton, QHBoxLayout, QLabel, QSizePolicy
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt
@@ -40,6 +44,7 @@ class ButtonFactory(QPushButton, QLabel):
                         QPushButton:hover {
                             text-decoration: underline;
                         }""",
+
             "logout": """QPushButton {
                             background-color: transparent;
                             color: white;
@@ -49,6 +54,7 @@ class ButtonFactory(QPushButton, QLabel):
                         QPushButton:hover {
                             text-decoration: underline;
                         }""",
+
             "exit": """QPushButton {
                             background-color: #E50202;
                             color: white;
@@ -59,12 +65,26 @@ class ButtonFactory(QPushButton, QLabel):
                         QPushButton:hover {
                             background-color: #8D0000;
                         }""",
+
             "default_black": """QPushButton{
                             color: black;
                             font-family: "Archivo Medium";
                             background-color: transparent;
+                            border-radius: 35px;
                         }
-                        """
+                        QPushButton:hover{
+                            background-color: #f0f0f0;
+                        }""",
+
+            "back": """QPushButton{
+                            background-color: transparent;
+                            color: black;
+                            font-family: "Archivo Medium";
+                            text-align: right;
+                        }
+                        QPushButton:hover{
+                            text-decoration:underline;
+                        }"""
         }
 
     def create_button(self, text, style="default", icon_path=None, font_size=16, min_size=(295, 150), icon_position = Qt.AlignCenter):
@@ -82,4 +102,3 @@ class ButtonFactory(QPushButton, QLabel):
             button.layout().addWidget(icon_label, 0, icon_position)
 
         return button
-

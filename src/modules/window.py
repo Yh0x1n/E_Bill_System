@@ -13,8 +13,8 @@ from styles.msg_boxes import MsgBoxFactory
 class MainWindow(QMainWindow):
     def __init__(self, username, email):
         super().__init__()
-    
-        self.setWindowIcon(QIcon("src/assets/AqualabLogo.jpg"))
+        self.setWindowTitle("Lachmann Invoice Generator")
+        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
         [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
@@ -176,19 +176,24 @@ class MainWindow(QMainWindow):
         self.btn_salir.clicked.connect(self.close_window)
 
         self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
+        self.btn_settings.setToolTip("Ajustes")
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
     def toggle_client_frame(self):
+
         # Alternar entre el contenido actual y el frame de clientes
         if not hasattr(self, 'clientsFrame'):
             from clients import Client
+
             self.clientsFrame = Client(self.dashboard)
             self.dashboardMidLayout.addWidget(self.clientsFrame)
 
         if not hasattr(self, 'backButton'):
             button = ButtonFactory()
-            self.backButton = button.create_button("Volver", style="default_black", font_size=14)
+
+            self.backButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
             self.backButton.clicked.connect(self.toggle_client_frame)
+
             self.dashboardMidLayout.addWidget(self.backButton, 0, Qt.AlignBottom | Qt.AlignLeft)
 
         dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]

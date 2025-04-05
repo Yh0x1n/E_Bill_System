@@ -14,7 +14,8 @@ class LoginWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("FastInvoice - Login")
+        self.setWindowTitle("Lanchmannn - Inicio de sesión")
+        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.setFixedSize(640, 480)
         self.setStyleSheet("""background-color: white;""")
         for init_method in (self.initUI, self.initLabels, self.initButtons, self.check_login): #Inicialización de métodos
@@ -163,13 +164,14 @@ class LoginWindow(QMainWindow):
             self.btn_login.clicked.connect(self.login)
             self.btn_register.clicked.connect(self.back_to_register)
             
-            self.username_input.returnPressed.connect(self.login)
-            self.password_input.returnPressed.connect(self.login)
+            for input in [self.username_input, self.password_input]:
+                input.returnPressed.connect(self.login)
             
         else:
             self.btn_login.setEnabled(False)
             self.btn_login.setStyleSheet(self.btn_login.styleSheet() + "QPushButton{background-color: gray;}")
             self.btn_register.clicked.connect(self.register)
+
     
     def login(self):
         msg = MsgBoxFactory()

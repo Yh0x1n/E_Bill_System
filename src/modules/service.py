@@ -32,7 +32,11 @@ class Service: # Clase que realiza la conexión a la DB
             self.cur.execute("""
                 CREATE TABLE IF NOT EXISTS cliente (
                     id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
-                    nombre_cliente TEXT NOT NULL
+                    nombre_cliente TEXT NOT NULL,
+                    cedula TEXT NOT NULL,
+                    direccion TEXT NOT NULL,
+                    telefono TEXT NOT NULL,
+                    email TEXT NOT NULL
                 );""") #Tabla "cliente"
             
             self.cur.execute("""
