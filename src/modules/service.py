@@ -23,7 +23,7 @@ class Service: # Clase que realiza la conexión a la DB
 
             self.cur.execute("""
                 CREATE TABLE IF NOT EXISTS producto (
-                    id_producto INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_producto TEXT PRIMARY KEY,
                     nombre TEXT NOT NULL,
                     descripcion TEXT NOT NULL,
                     precio INTEGER NOT NULL
@@ -31,7 +31,7 @@ class Service: # Clase que realiza la conexión a la DB
             
             self.cur.execute("""
                 CREATE TABLE IF NOT EXISTS cliente (
-                    id_cliente INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_cliente TEXT PRIMARY KEY,
                     nombre_cliente TEXT NOT NULL,
                     cedula TEXT NOT NULL,
                     direccion TEXT NOT NULL,
@@ -41,8 +41,7 @@ class Service: # Clase que realiza la conexión a la DB
             
             self.cur.execute("""
             CREATE TABLE IF NOT EXISTS facturas (
-                id_factura INTEGER PRIMARY KEY AUTOINCREMENT,
-                numero_factura INTEGER NOT NULL,
+                id_factura TEXT PRIMARY KEY,
                 fecha_emision DATE NOT NULL,
                 hora_emision TIME NOT NULL,
                 id_cliente INTEGER NOT NULL,
@@ -61,23 +60,28 @@ class Service: # Clase que realiza la conexión a la DB
             print("Error al crear las tablas: ", e)
             sys.exit(1)
 
-    def get_data(self): #Obtiene todos los datos
-        pass
+    #Clientes
+    def insert_client(self, nombre, cedula, dir, tlf, email):
+        import random
+        id_cliente = f"CLI-{str(random.randint(100, 999))}"
+        self.cur.execute("INSERT INTO cliente(id_cliente, nombre_cliente, cedula, direccion, telefono, email) VALUES (?, ?, ?, ?, ?, ?);", (id_cliente, nombre, cedula, dir, tlf, email))
+        return self.conn.commit()
 
-    def get_data_by_id(self, id): #Obtiene los datos por ID
-        pass
+    def delete_client(self, id_cliente):
+        self.cur.execute("DELETE FROM cliente WHERE id_cliente = ?;", (id_cliente,))
+        return self.conn.commit()
 
-    def insert_data(self, data): #Inserta datos
-        pass
-
-    def update_data(self, data): #Actualiza datos
-        pass
-
-    def delete_data(self, id): #Elimina datos
-        pass
-
+    def edit_client(self):
+        self.cur.execute("") #TO-DO: Crear los comandos SQL para la edición de campos
+        return self.conn.commit()
+    
+    def show_client_details(self, id_cliente):
+        self.cur.execute("SELECT * FROM cliente WHERE id_cliente = ?;", (id_cliente,))
+        return self.cur.fetchall()
+        
+    #Facturas
     def get_last_facturas(self):
-        self.cur.execute("SELECT * FROM facturas ORDER BY id_factura DESC LIMIT 5")
+        self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
         return self.cur.fetchall()
     
     def close(self): #Cierra la conexión

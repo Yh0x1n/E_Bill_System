@@ -17,13 +17,13 @@ class LabelFactory(QLabel):
             "medium_black" : """QLabel{
                                     background-color: transparent;
                                     color: black;
-                                    font-family: "Archivo Medium"
+                                    font-family: "Archivo Medium";
                                 }""",
 
             "medium_white" : """QLabel{
                                     background-color: transparent;
                                     color: white;
-                                    font-family: "Archivo Medium"
+                                    font-family: "Archivo Medium";
                                 }""",
 
             "money" : """QLabel{

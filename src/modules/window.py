@@ -256,7 +256,7 @@ class MainWindow(QMainWindow):
         from login import LoginWindow
 
         q = MsgBoxFactory()
-        response = q.create_question_box("question", "Información", "¿Quieres cerrar sesión?", QMessageBox.Information, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
+        response = q.create_question_box("question", "Información", "¿Desea cerrar sesión?", QMessageBox.Information, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
         response.exec()
         if response.clickedButton().text() == "Sí":  # Verifica si el botón "Sí" fue presionado
             self.close()
@@ -299,6 +299,7 @@ class MainWindow(QMainWindow):
             self.sideMidTopLayout.addWidget(self.ventasWidget)
             self.ventasWidget.setVisible(True)
             self.ventasWidget.setVisible(True)
+            
     def initDateTime(self): # Función para mostrar la fecha actual
         now = datetime.now()
         self.date_label.setText(now.strftime("%d/%m/%Y"))

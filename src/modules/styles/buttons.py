@@ -49,7 +49,7 @@ class ButtonFactory(QPushButton, QLabel):
                             background-color: transparent;
                             color: white;
                             border-radius: 0px;
-                            font-family: "Archivo Medium"
+                            font-family: "Archivo Medium";
                         }
                         QPushButton:hover {
                             text-decoration: underline;
@@ -84,6 +84,28 @@ class ButtonFactory(QPushButton, QLabel):
                         }
                         QPushButton:hover{
                             text-decoration:underline;
+                        }""",
+
+            "accept": """QPushButton{
+                            background-color: blue;
+                            color: white;
+                            font-family: "Archivo Medium";
+                            text-align: center;
+                            border-radius: 20px;    
+                        }
+                        QPushButton:hover{
+                            background-color: darkblue;
+                        }
+                        """,
+            "cancel": """QPushButton{
+                            background-color: red;
+                            color: white;
+                            font-family: "Archivo Medium";
+                            text-align: center;
+                            border-radius: 20px;    
+                        }
+                        QPushButton:hover{
+                            background-color: darkred;
                         }"""
         }
 
