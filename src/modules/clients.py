@@ -18,12 +18,12 @@ class Client(QWidget):
         
         self.initUI()
         
-    def initUI(self):
+    def initUI(self): #Inicio de la interfaz gráfica
         self.initHeader()
         self.initButtons()
         self.initList()
         
-    def initHeader(self):
+    def initHeader(self): #Inicio del header
         label = LabelFactory()
 
         self.headerLayout = QGridLayout()  # Cambiar a QGridLayout para organizar el header
@@ -35,7 +35,7 @@ class Client(QWidget):
 
         self.clientLayout.addLayout(self.headerLayout)  # Añadir el headerLayout al layout principal
 
-    def initButtons(self):
+    def initButtons(self): #Inicio de los botones
         button = ButtonFactory()
 
         self.buttonLayout = QGridLayout()
@@ -52,6 +52,7 @@ class Client(QWidget):
         self.buttonLayout.addWidget(self.btn_add, 4, 3, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
         self.btn_edit = button.create_button("", "default_black", "src/assets/icons/Pen.png", min_size = (75, 75))
+        self.btn_edit.clicked.connect(self.edit_client)
         self.buttonLayout.addWidget(self.btn_edit, 4, 4, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
         self.btn_delete = button.create_button("", "default_black", "src/assets/icons/Trash.png", min_size = (75, 75))
@@ -60,10 +61,11 @@ class Client(QWidget):
 
         description = ["Editar", "Agregar", "Eliminar", "Ajustes"]
         buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings]
+        
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
 
-    def initList(self):
+    def initList(self): #Inicio de la lista de clientes
         import pandas as pd
         from service import s
 
@@ -129,7 +131,7 @@ class Client(QWidget):
                         """)
 
         self.w = QMainWindow()
-        self.w.setFixedSize(640, 480)
+        self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
@@ -146,7 +148,7 @@ class Client(QWidget):
 
         # Header label for the "Agregar Cliente" section
         header_label = label.create_label("Agregar Cliente", "Archivo Medium", "medium_black", 20)
-        header_sublabel = label.create_label("Complete los campos necesarios para\nañadir a su cliente", "Archivo Medium", "medium_black", 14)
+        header_sublabel = label.create_label("Completa los campos necesarios para\nañadir a tu cliente", "Archivo Medium", "medium_black", 14)
         self.w_layout.addWidget(header_label, 0, 0, Qt.AlignLeft)
         self.w_layout.addWidget(header_sublabel, 1, 0, Qt.AlignLeft | Qt.AlignTop)
 
@@ -180,11 +182,11 @@ class Client(QWidget):
                 try:
                     msgbox = MsgBoxFactory()
                     
-                    q = msgbox.create_question_box("question", "Información", "¿Desea añadir este cliente?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
+                    q = msgbox.create_question_box("question", "Información", "¿Deseas añadir este cliente?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
                     q.exec()
 
                     if q.clickedButton().text() == "Sí":
-                        q2 = msgbox.create_msg_box("information", "Información", "Cliente agregado exitósamente", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                        q2 = msgbox.create_msg_box("information", "Información", "Cliente agregado correctamente", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                         q2.exec()
 
                         s.insert_client(*values)
@@ -238,7 +240,144 @@ class Client(QWidget):
         self.w.show()
 
     def edit_client(self): #Método para editar los clientes 
-        pass
+        from service import s
+
+        label = LabelFactory()
+        button = ButtonFactory()
+
+        input_stylesheet = ("""
+                        color: black;
+                        background-color: white;
+                        border: 1px solid black;
+                        border-radius: 5px;
+                        font-family: "Archivo Medium";
+                        font-size: 16px;
+                        padding: 5px;
+                        """)
+
+        self.w = QMainWindow()
+        self.w.setFixedSize(640, 400)
+        self.w.setWindowTitle("Lanchmann - Agregar cliente")
+        self.w.setStyleSheet("""background-color: white;""")
+        self.w.setContentsMargins(20,20,20,20)
+        
+        central_widget = QWidget(self.w)
+        central_widget.setContentsMargins(10, 10, 10, 10)
+        central_widget.setStyleSheet("background-color: #f0f0f0; border-radius: 20px;")
+        self.w.setCentralWidget(central_widget)
+
+        self.w_layout = QGridLayout()
+        self.w_layout.setContentsMargins(5, 5, 5, 5)
+        self.w_layout.setSpacing(5)
+        central_widget.setLayout(self.w_layout)
+
+        # Header label for the "Agregar Cliente" section
+        header_label = label.create_label("Editar cliente", "Archivo Medium", "medium_black", 20)
+        header_sublabel = label.create_label("Especifica los campos que desees editar", "Archivo Medium", "medium_black", 14)
+        self.w_layout.addWidget(header_label, 0, 0, Qt.AlignLeft)
+        self.w_layout.addWidget(header_sublabel, 1, 0, Qt.AlignLeft | Qt.AlignTop)
+
+        #Campos de texto y botones
+        row = self.client_table.currentRow()
+        client_id = self.client_table.item(row, 0).text()
+        
+        client_details = s.show_client_details(client_id)
+        if client_details:
+            details = client_details[0]  # Assumes the result is a tuple: (id, nombre, cedula, dirección, teléfono, email)
+            cedula = details[2]
+            direccion = details[3]
+        else:
+            cedula = ""
+            direccion = ""
+        
+        fields = [
+            ("nombre", f"{self.client_table.item(row, 1).text()}"),
+            ("cedula", cedula),
+            ("dir", direccion),
+            ("tlf", f"{self.client_table.item(row, 2).text()}"),
+            ("email", f"{self.client_table.item(row, 3).text()}")
+        ]
+
+        buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
+
+        def command():
+            from service import s
+            import pandas as pd
+            from styles.msg_boxes import MsgBoxFactory
+
+            # Obtener los valores de cada campo
+            fields_values = [
+            ('nombre', self.nombre_input),
+            ('cedula', self.cedula_input),
+            ('direccion', self.dir_input),
+            ('telefono', self.tlf_input),
+            ('email', self.email_input)
+            ]
+
+            values = [field.text() for _, field in fields_values]
+            
+            try:
+                msgbox = MsgBoxFactory()
+                
+                q = msgbox.create_question_box("question", "Información", "¿Deseas guardar los cambios?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
+                q.exec()
+
+                if q.clickedButton().text() == "Sí":
+                    q2 = msgbox.create_msg_box("information", "Información", "Cliente editado correctamente", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                    q2.exec()
+
+                    s.insert_client(*values)
+                    
+                    self.w.close()
+
+                # Refrescar la tabla con los nuevos datos
+                df = pd.read_sql("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
+                self.client_table.setRowCount(len(df))
+                for i, row in df.iterrows():
+                    for j, value in enumerate(row):
+                        self.client_table.setItem(i, j, QTableWidgetItem(str(value)))
+
+            except Exception as e:
+                print("Error al editar el cliente:", e)
+
+        def close():
+            self.w.close()
+
+        for i, (key, text) in enumerate(fields):
+            row = ((i // 2) * 2) + 2  # Empezar en la fila 1, luego filas 1-2, 3-4, etc.
+            col = i % 2
+
+            field_input = QLineEdit()
+            field_input.setStyleSheet(input_stylesheet)
+            field_input.setPlaceholderText(text)
+
+            match key:
+                case "dir":
+                    field_input.setMinimumWidth(275)
+                case "email":
+                    field_input.setMinimumWidth(250)
+                case "nombre":
+                    field_input.setMinimumWidth(200)
+                case _:
+                    pass
+
+            setattr(self, f"{key}_input", field_input)
+            self.w_layout.addWidget(getattr(self, f"{key}_input"), row, col, Qt.AlignLeft)
+
+            # Conectar la tecla Enter para ejecutar command en cada campo
+            field_input.returnPressed.connect(command)
+
+        for i, (key, text) in enumerate(buttons):
+            col = i % 2
+            style = "accept" if key == "accept" else "cancel"
+            setattr(self, f'btn_{key}', button.create_button(text, style, None, 16, (125, 50)))
+            self.w_layout.addWidget(getattr(self, f'btn_{key}'), 7, col, Qt.AlignCenter)
+
+        # Vincular la función command al botón "Aceptar"
+        self.btn_accept.clicked.connect(command)
+        self.btn_cancel.clicked.connect(close)
+
+        self.w.show()
     
     def delete_client(self): #Método para borrar un cliente
         from service import s

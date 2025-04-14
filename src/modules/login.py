@@ -14,14 +14,14 @@ class LoginWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Lanchmannn - Inicio de sesión")
+        self.setWindowTitle("Lanchmann - Inicio de sesión")
         self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.setFixedSize(640, 480)
         self.setStyleSheet("""background-color: white;""")
         for init_method in (self.initUI, self.initLabels, self.initButtons, self.check_login): #Inicialización de métodos
             init_method()
         
-    def initUI(self):
+    def initUI(self): #Inicio de la interfaz gráfica
         self.foregrd = QFrame(self)
         self.foregrd.setStyleSheet("""
                                     border-radius: 15px;
@@ -37,8 +37,7 @@ class LoginWindow(QMainWindow):
 
         self.foregrd.setLayout(self.loginLayout)
     
-    def initLabels(self):
-        #Creación de los labels
+    def initLabels(self): #Creación de los labels
         self.profile_photo = QLabel()
         pixmap = QIcon("src/assets/pictures/AqualabLogo.jpg").pixmap(100, 100)
         circular_pixmap = QPixmap(100, 100)
@@ -67,7 +66,6 @@ class LoginWindow(QMainWindow):
         self.loginLayout.addWidget(self.welcome_label, 1, 0, 1, 4, Qt.AlignCenter | Qt.AlignTop)
 
         #Campos de texto
-
         self.username_label = QLabel("Usuario")
         self.username_label.setFont(QFont("Archivo Medium", 12))
         self.username_label.setStyleSheet("""
@@ -141,8 +139,7 @@ class LoginWindow(QMainWindow):
         self.loginLayout.addWidget(self.password_label, 6, 0, 1, 4, Qt.AlignLeft | Qt.AlignBottom)
         self.loginLayout.addWidget(self.password_input, 7, 0, 1, 4, Qt.AlignCenter | Qt.AlignTop)
         
-    def initButtons(self):
-        #Dos botones de registro e inicio de sesión
+    def initButtons(self): #Dos botones de registro e inicio de sesión
         button = ButtonFactory()
 
         self.btn_login = button.create_button("Iniciar sesión", "login/register", None, 12, (150, 40))
@@ -151,8 +148,7 @@ class LoginWindow(QMainWindow):
         self.btn_register = button.create_button("Registrarse", "login/register", None, 12, (150, 40))
         self.loginLayout.addWidget(self.btn_register, 8, 2, 3, 2, Qt.AlignCenter)
 
-    def check_login(self):
-
+    def check_login(self): #Método que verifica si el usuario ya existe en la base de datos
         s.cur.execute("SELECT * FROM usuario")
         user = s.cur.fetchall()
 
@@ -173,7 +169,7 @@ class LoginWindow(QMainWindow):
             self.btn_register.clicked.connect(self.register)
 
     
-    def login(self):
+    def login(self): #Método de acción de inicio de sesión
         msg = MsgBoxFactory()
         self.username = self.username_input.text()
         self.password = self.password_input.text()
@@ -190,8 +186,9 @@ class LoginWindow(QMainWindow):
             error_msg = msg.create_msg_box("warning", "Error", "Usuario o contraseña incorrectos.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
             error_msg.exec()
 
-    def register(self):
+    def register(self): #Método de acción de registro de usuario
         msg = MsgBoxFactory()
+
         self.username = self.username_input.text()
         self.email = self.email_input.text()
         self.password = self.password_input.text()
@@ -242,11 +239,11 @@ class LoginWindow(QMainWindow):
         self.email_input.show()
         self.btn_register.clicked.connect(self.register)
 
-def closeEvent(event):
+def closeEvent(event): #Cierra la ventana
     s.conn.close()
     event.accept()
 
-if __name__ == "__main__":
+if __name__ == "__main__": #Ejecución de la ventana
     app = QApplication(sys.argv)
     window = LoginWindow()
     window.show()

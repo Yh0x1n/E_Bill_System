@@ -71,8 +71,29 @@ class Service: # Clase que realiza la conexión a la DB
         self.cur.execute("DELETE FROM cliente WHERE id_cliente = ?;", (id_cliente,))
         return self.conn.commit()
 
-    def edit_client(self):
-        self.cur.execute("") #TO-DO: Crear los comandos SQL para la edición de campos
+    def edit_client(self, id_cliente, nombre, cedula, dir, tlf, email):
+        fields = {
+            "nombre_cliente": nombre,
+            "cedula": cedula,
+            "direccion": dir,
+            "telefono": tlf,
+            "email": email
+        }
+        set_clause = []
+        params = {}
+        
+        for column, value in fields.items():
+            if value is not None and value != "":
+                set_clause.append(f"{column} = :{column}")
+                params[column] = value
+
+        if not set_clause:
+            return
+
+        params["id_cliente"] = id_cliente
+        query = f"UPDATE cliente SET {', '.join(set_clause)} WHERE id_cliente = :id_cliente"
+        self.cur.execute(query, params)
+
         return self.conn.commit()
     
     def show_client_details(self, id_cliente):
