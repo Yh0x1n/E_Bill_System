@@ -170,6 +170,7 @@ class MainWindow(QMainWindow):
 
         self.btn_productos = button.create_button("Productos y servicios", icon_path="src/assets/icons/dollarSign.png")
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
+        self.btn_productos.clicked.connect(self.toggle_products_frame)
 
         self.btn_salir = button.create_button("Salir", style="exit", icon_path="src/assets/icons/Xsquare.png")
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
@@ -180,7 +181,6 @@ class MainWindow(QMainWindow):
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
     def toggle_client_frame(self):
-
         # Alternar entre el contenido actual y el frame de clientes
         if not hasattr(self, 'clientsFrame'):
             from clients import Client
@@ -188,37 +188,69 @@ class MainWindow(QMainWindow):
             self.clientsFrame = Client(self.dashboard)
             self.dashboardMidLayout.addWidget(self.clientsFrame)
 
-        if not hasattr(self, 'backButton'):
+        if not hasattr(self, 'clientBackButton'):
             button = ButtonFactory()
 
-            self.backButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
-            self.backButton.clicked.connect(self.toggle_client_frame)
+            self.clientBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
+            self.clientBackButton.clicked.connect(self.toggle_client_frame)
 
-            self.dashboardMidLayout.addWidget(self.backButton, 0, Qt.AlignBottom | Qt.AlignLeft)
+            self.dashboardMidLayout.addWidget(self.clientBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
 
         dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
 
         if self.clientsFrame.isVisible():
             # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
             self.clientsFrame.setVisible(False)
-            self.backButton.setVisible(False)
+            self.clientBackButton.setVisible(False)
+            #self.dashboardMidLayout.removeWidget(self.clientsFrame)
 
             for element in dashboard_elements:
                 element.setVisible(True)
         else:
             # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
             self.clientsFrame.setVisible(True)
-            self.backButton.setVisible(True)
+            self.clientBackButton.setVisible(True)
+
+            for element in dashboard_elements:
+                element.setVisible(False)
+
+    def toggle_products_frame(self):
+        # Alternar entre el contenido actual y el frame de productos
+        if not hasattr(self, 'productsFrame'):
+            from products import Product
+
+            self.productsFrame = Product(self.dashboard)
+            self.dashboardMidLayout.addWidget(self.productsFrame)
+
+        if not hasattr(self, 'productBackButton'):
+            button = ButtonFactory()
+
+            self.productBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
+            self.productBackButton.clicked.connect(self.toggle_products_frame)
+
+            self.dashboardMidLayout.addWidget(self.productBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
+
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+
+        if self.productsFrame.isVisible():
+            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
+            self.productsFrame.setVisible(False)
+            self.productBackButton.setVisible(False)
+            #self.dashboardMidLayout.removeWidget(self.productsFrame)
+
+            for element in dashboard_elements:
+                element.setVisible(True)
+        else:
+            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
+            self.productsFrame.setVisible(True)
+            self.productBackButton.setVisible(True)
 
             for element in dashboard_elements:
                 element.setVisible(False)
 
     def toggle_create_invoices_frame(self):
         pass
-
-    def toggle_products_frame(self):
-        pass
-
+    
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
         self.dashboard.setFixedSize(self.width() - 350, self.height())

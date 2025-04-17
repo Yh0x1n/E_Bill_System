@@ -26,7 +26,7 @@ class Service: # Clase que realiza la conexión a la DB
                     id_producto TEXT PRIMARY KEY,
                     nombre TEXT NOT NULL,
                     descripcion TEXT NOT NULL,
-                    precio INTEGER NOT NULL
+                    precio REAL NOT NULL
                 );""") #Tabla "producto"
             
             self.cur.execute("""
@@ -44,13 +44,13 @@ class Service: # Clase que realiza la conexión a la DB
                 id_factura TEXT PRIMARY KEY,
                 fecha_emision DATE NOT NULL,
                 hora_emision TIME NOT NULL,
-                id_cliente INTEGER NOT NULL,
-                id_producto INTEGER NOT NULL,
+                id_cliente TEXT NOT NULL,
+                id_producto TEXT NOT NULL,
                 comprobante BLOB NOT NULL,
-                emisor INTEGER NOT NULL,
-                subtotal INTEGER NOT NULL,
-                iva INTEGER NOT NULL,
-                total INTEGER NOT NULL,
+                emisor TEXT NOT NULL,
+                subtotal REAL NOT NULL,
+                iva REAL NOT NULL,
+                total REAL NOT NULL,
                 FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente),
                 FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
                 FOREIGN KEY (emisor) REFERENCES usuario (id)
@@ -99,7 +99,59 @@ class Service: # Clase que realiza la conexión a la DB
     def show_client_details(self, id_cliente):
         self.cur.execute("SELECT * FROM cliente WHERE id_cliente = ?;", (id_cliente,))
         return self.cur.fetchall()
+
+    #Productos y servicios
+    def insert_product(self, nombre, descripcion, precio):
+        import random
+        # Se utiliza el "codigo" como identificador único (id_producto)
+        codigo = f"PRD-{random.randint(100, 999)}"
+        try:
+            self.cur.execute(
+                "INSERT INTO producto(id_producto, nombre, descripcion, precio) VALUES (?, ?, ?, ?)",
+                (codigo, nombre, descripcion, precio,)
+            )
+            self.conn.commit()
+        except Exception as e:
+            print("Error al insertar el producto:", e)
+
+    def edit_product(self, product_id, nombre, precio, descripcion):
+        #TO-DO: ACTUALIZAR ESTE MÉTODO
+        fields = {
+            "nombre": nombre,
+            "precio": precio,
+            "descripcion": descripcion
+        }
+        set_clause = []
+        params = {}
         
+        for column, value in fields.items():
+            if value is not None and value != "":
+                set_clause.append(f"{column} = :{column}")
+                params[column] = value
+
+        if not set_clause:
+            return
+
+        params["id_producto"] = product_id
+        query = f"UPDATE producto SET {', '.join(set_clause)} WHERE id_producto = :id_producto"
+        self.cur.execute(query, params)
+
+        return self.conn.commit()
+
+    def delete_product(self, product_id):
+        try:
+            self.cur.execute("DELETE FROM producto WHERE id_producto = ?", (product_id,))
+            self.conn.commit()
+        
+        except Exception as e:
+            print("Error al eliminar el producto:", e)
+
+    def show_product_details(self, product_id):
+        # Se retorna una tupla con: ID, Nombre, Código, Precio y Descripción
+
+        self.cur.execute("SELECT * FROM producto WHERE id_producto = ?",(product_id,))
+        return self.cur.fetchall()
+
     #Facturas
     def get_last_facturas(self):
         self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
@@ -107,5 +159,6 @@ class Service: # Clase que realiza la conexión a la DB
     
     def close(self): #Cierra la conexión
         self.conn.close()
+    
 
 s = Service()
