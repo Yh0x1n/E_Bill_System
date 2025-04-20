@@ -16,3 +16,4 @@ qrcode
 myqr
 pycryptodome
 pynput
+PyInvoice
