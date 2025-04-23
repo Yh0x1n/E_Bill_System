@@ -3,13 +3,8 @@ PySide6
 PySide6_Addons
 PySide6_Essentials
 python-dateutil
-pytz
-shiboken6
-six
 tzdata
 openpyxl
-fastapi[standard]
-pydantic
 reportlab
 lxml
 qrcode
