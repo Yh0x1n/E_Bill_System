@@ -8,8 +8,21 @@ import sqlite3 as sql, os, sys
 
 class Service: # Clase que realiza la conexión a la DB
     def __init__(self):
-        self.conn = sql.connect(os.path.abspath("src/database.db"))
-        self.cur = self.conn.cursor()
+        try:
+            db_path = os.path.abspath("src/database.db")
+            if not os.path.exists(db_path):
+                raise FileNotFoundError(f"La base de datos no se encontró en la ruta: {db_path}")
+
+            self.conn = sql.connect(db_path)
+            self.cur = self.conn.cursor()
+            print("Conexión a la base de datos establecida correctamente.")
+        except FileNotFoundError as fnf_error:
+            print(fnf_error)
+            raise
+        except sql.Error as db_error:
+            print(f"Error al conectar con la base de datos: {db_error}")
+            raise
+
         try:
             #Creación de tablas
             self.cur.execute("""
@@ -100,6 +113,10 @@ class Service: # Clase que realiza la conexión a la DB
         self.cur.execute("SELECT * FROM cliente WHERE id_cliente = ?;", (id_cliente,))
         return self.cur.fetchall()
 
+    def get_client_by_id(self):
+        self.cur.execute("SELECT id_cliente, nombre_cliente FROM cliente;")
+        return self.cur.fetchall()
+
     #Productos y servicios
     def insert_product(self, nombre, descripcion, precio):
         import random
@@ -158,7 +175,9 @@ class Service: # Clase que realiza la conexión a la DB
         return self.cur.fetchall()
     
     def close(self): #Cierra la conexión
-        self.conn.close()
+        if self.conn:
+            self.conn.close()
+            print("Conexión a la base de datos cerrada correctamente.")
     
 
 s = Service()

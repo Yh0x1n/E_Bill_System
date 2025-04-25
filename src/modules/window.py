@@ -163,6 +163,7 @@ class MainWindow(QMainWindow):
         # BOTONES DEL DASHBOARD
         self.btn_facturas = button.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
         self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
+        self.btn_facturas.clicked.connect(self.toggle_create_invoices_frame)
 
         self.btn_clientes = button.create_button("Clientes", icon_path="src/assets/icons/Briefcase.png")
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
@@ -249,7 +250,38 @@ class MainWindow(QMainWindow):
                 element.setVisible(False)
 
     def toggle_create_invoices_frame(self):
-        pass
+        # Alternar entre el contenido actual y el frame de productos
+        if not hasattr(self, 'invoiceFrame'):
+            from invoices import Invoice
+
+            self.invoiceFrame = Invoice(self.dashboard)
+            self.dashboardMidLayout.addWidget(self.invoiceFrame)
+
+        if not hasattr(self, 'invoiceBackButton'):
+            button = ButtonFactory()
+
+            self.invoiceBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
+            self.invoiceBackButton.clicked.connect(self.toggle_create_invoices_frame)
+
+            self.dashboardMidLayout.addWidget(self.invoiceBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
+
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+
+        if self.invoiceFrame.isVisible():
+            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
+            self.invoiceFrame.setVisible(False)
+            self.invoiceBackButton.setVisible(False)
+            #self.dashboardMidLayout.removeWidget(self.productsFrame)
+
+            for element in dashboard_elements:
+                element.setVisible(True)
+        else:
+            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
+            self.invoiceFrame.setVisible(True)
+            self.invoiceBackButton.setVisible(True)
+
+            for element in dashboard_elements:
+                element.setVisible(False)
     
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
