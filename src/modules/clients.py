@@ -129,7 +129,7 @@ class Client(QWidget):
                         font-size: 16px;
                         padding: 5px;
                         """)
-
+        
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")

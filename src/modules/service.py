@@ -11,9 +11,10 @@ class Service: # Clase que realiza la conexión a la DB
         try:
             db_path = os.path.abspath("src/database.db")
             if not os.path.exists(db_path):
-                raise FileNotFoundError(f"La base de datos no se encontró en la ruta: {db_path}")
-
-            self.conn = sql.connect(db_path)
+                print(f"La base de datos no se encontró en la ruta: {db_path}\nCreando la base de datos en la ruta especificada...")
+                self.conn = sql.connect(db_path)
+            else:
+                self.conn = sql.connect(db_path)
             self.cur = self.conn.cursor()
             print("Conexión a la base de datos establecida correctamente.")
         except FileNotFoundError as fnf_error:
@@ -56,13 +57,12 @@ class Service: # Clase que realiza la conexión a la DB
             CREATE TABLE IF NOT EXISTS facturas (
                 id_factura TEXT PRIMARY KEY,
                 fecha_emision DATE NOT NULL,
-                hora_emision TIME NOT NULL,
                 id_cliente TEXT NOT NULL,
                 id_producto TEXT NOT NULL,
                 comprobante BLOB NOT NULL,
                 emisor TEXT NOT NULL,
                 subtotal REAL NOT NULL,
-                iva REAL NOT NULL,
+                iva REAL NULL,
                 total REAL NOT NULL,
                 FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente),
                 FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
@@ -170,6 +170,16 @@ class Service: # Clase que realiza la conexión a la DB
         return self.cur.fetchall()
 
     #Facturas
+    def insert_invoice(self, id_factura, fecha_emision, id_cliente, id_producto, comprobante, emisor, subtotal, iva, total):
+        try:
+            self.cur.execute(
+                "INSERT INTO facturas(id_factura, fecha_emision, id_cliente, id_producto, comprobante, emisor, subtotal, iva, total) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (id_factura, fecha_emision, id_cliente, id_producto, comprobante, emisor, subtotal, iva, total)
+            )
+            self.conn.commit()
+        except Exception as e:
+            print("Error al insertar la factura:", e)
+
     def get_last_facturas(self):
         self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
         return self.cur.fetchall()
