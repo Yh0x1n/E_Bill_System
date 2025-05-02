@@ -1,5 +1,5 @@
 '''
-Script de la ventana principal de la aplicación
+Módulo de la ventana principal de la aplicación
 '''
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QMessageBox, QFrame, QSizePolicy, QGridLayout, QLayout
 from PySide6.QtCore import Qt
@@ -158,6 +158,7 @@ class MainWindow(QMainWindow):
         self.sideMidTopLayout.addWidget(self.btn_ayuda, 0, Qt.AlignLeft)
 
         self.btn_about = button.create_button("Acerca de", style = "sales", font_size=14, min_size=(130,0))
+        self.btn_about.clicked.connect(self.about)
         self.sideMidTopLayout.addWidget(self.btn_about, 0, Qt.AlignLeft)
 
         # BOTONES DEL DASHBOARD
@@ -181,111 +182,51 @@ class MainWindow(QMainWindow):
         self.btn_settings.setToolTip("Ajustes")
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
-    def toggle_client_frame(self):
-        # Alternar entre el contenido actual y el frame de clientes
-        if not hasattr(self, 'clientsFrame'):
-            from clients import Client
+    def toggle_frame(self, frame_attr, frame_class, back_button_attr, toggle_method, dashboard_elements):
+        # Alternar entre el contenido actual y un frame específico
+        if not hasattr(self, frame_attr):
+            frame_instance = frame_class(self.dashboard)
+            setattr(self, frame_attr, frame_instance)
+            self.dashboardMidLayout.addWidget(frame_instance)
 
-            self.clientsFrame = Client(self.dashboard)
-            self.dashboardMidLayout.addWidget(self.clientsFrame)
-
-        if not hasattr(self, 'clientBackButton'):
+        if not hasattr(self, back_button_attr):
             button = ButtonFactory()
+            back_button = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
+            back_button.clicked.connect(toggle_method)
+            back_button.setShortcut("Esc")
+            setattr(self, back_button_attr, back_button)
+            self.dashboardMidLayout.addWidget(back_button, 0, Qt.AlignBottom | Qt.AlignLeft)
 
-            self.clientBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
-            self.clientBackButton.clicked.connect(self.toggle_client_frame)
-            self.clientBackButton.setShortcut("Esc")
+        frame = getattr(self, frame_attr)
+        back_button = getattr(self, back_button_attr)
 
-            self.dashboardMidLayout.addWidget(self.clientBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
-
-        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
-
-        if self.clientsFrame.isVisible():
-            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
-            self.clientsFrame.setVisible(False)
-            self.clientBackButton.setVisible(False)
-            #self.dashboardMidLayout.removeWidget(self.clientsFrame)
-
+        if frame.isVisible():
+            # Ocultar el frame y mostrar los elementos originales del dashboard
+            frame.setVisible(False)
+            back_button.setVisible(False)
             for element in dashboard_elements:
                 element.setVisible(True)
         else:
-            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
-            self.clientsFrame.setVisible(True)
-            self.clientBackButton.setVisible(True)
-
+            # Mostrar el frame y ocultar los elementos originales del dashboard
+            frame.setVisible(True)
+            back_button.setVisible(True)
             for element in dashboard_elements:
                 element.setVisible(False)
+
+    def toggle_client_frame(self):
+        from clients import Client
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+        self.toggle_frame('clientsFrame', Client, 'clientBackButton', self.toggle_client_frame, dashboard_elements)
 
     def toggle_products_frame(self):
-        # Alternar entre el contenido actual y el frame de productos
-        if not hasattr(self, 'productsFrame'):
-            from products import Product
-
-            self.productsFrame = Product(self.dashboard)
-            self.dashboardMidLayout.addWidget(self.productsFrame)
-
-        if not hasattr(self, 'productBackButton'):
-            button = ButtonFactory()
-
-            self.productBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
-            self.productBackButton.clicked.connect(self.toggle_products_frame)
-            self.productBackButton.setShortcut("Esc")
-
-            self.dashboardMidLayout.addWidget(self.productBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
-
+        from products import Product
         dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
-
-        if self.productsFrame.isVisible():
-            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
-            self.productsFrame.setVisible(False)
-            self.productBackButton.setVisible(False)
-            #self.dashboardMidLayout.removeWidget(self.productsFrame)
-
-            for element in dashboard_elements:
-                element.setVisible(True)
-        else:
-            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
-            self.productsFrame.setVisible(True)
-            self.productBackButton.setVisible(True)
-
-            for element in dashboard_elements:
-                element.setVisible(False)
+        self.toggle_frame('productsFrame', Product, 'productBackButton', self.toggle_products_frame, dashboard_elements)
 
     def toggle_create_invoices_frame(self):
-        # Alternar entre el contenido actual y el frame de productos
-        if not hasattr(self, 'invoiceFrame'):
-            from invoices import Invoice
-
-            self.invoiceFrame = Invoice(self.dashboard)
-            self.dashboardMidLayout.addWidget(self.invoiceFrame)
-
-        if not hasattr(self, 'invoiceBackButton'):
-            button = ButtonFactory()
-
-            self.invoiceBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
-            self.invoiceBackButton.clicked.connect(self.toggle_create_invoices_frame)
-            self.invoiceBackButton.setShortcut("Esc")
-
-            self.dashboardMidLayout.addWidget(self.invoiceBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
-
+        from invoices import Invoice
         dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
-
-        if self.invoiceFrame.isVisible():
-            # Ocultar el frame de clientes y mostrar los elementos originales del dashboard
-            self.invoiceFrame.setVisible(False)
-            self.invoiceBackButton.setVisible(False)
-            #self.dashboardMidLayout.removeWidget(self.productsFrame)
-
-            for element in dashboard_elements:
-                element.setVisible(True)
-        else:
-            # Mostrar el frame de clientes y ocultar los elementos originales del dashboard
-            self.invoiceFrame.setVisible(True)
-            self.invoiceBackButton.setVisible(True)
-
-            for element in dashboard_elements:
-                element.setVisible(False)
-        
+        self.toggle_frame('invoiceFrame', Invoice, 'invoiceBackButton', self.toggle_create_invoices_frame, dashboard_elements)
         self.invoiceFrame.update_lists()
     
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
@@ -377,6 +318,13 @@ class MainWindow(QMainWindow):
         # Mostrar el usuario que inició sesión
         self.user_label.setText(username)
         self.email_label.setText(email)
+    
+    def about(self): #Método que muestra información sobre la aplicación
+        q = MsgBoxFactory()
+        q.resize(400, 200)
+        response  = q.about(self, "Acerca de", "Lachmann Invoice Generator for Aqualab Ozono y Salud S.A.S\n\nVersión 1.0\n\nDesarrollado por RossTech Solutions\nBajo licencia GPL")
+
+        return response
     
     def close_window(self):
         self.close()

@@ -2,6 +2,7 @@
 #Importaciones
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFontDatabase, QFont
+from PySide6.QtCore import Qt
 from login import LoginWindow
 import os, sys
 import traceback
@@ -47,6 +48,7 @@ def load_fonts():
 # Manejo global de excepciones para capturar errores silenciosos
 def main():
     try:
+        QApplication.setAttribute(Qt.AA_DontUseNativeDialogs, True)
         app = QApplication(sys.argv)
         load_fonts()
         window = LoginWindow()

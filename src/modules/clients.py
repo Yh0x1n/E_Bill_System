@@ -155,7 +155,7 @@ class Client(QWidget):
         #Campos de texto y botones
         fields = [
             ("nombre", "Nombre del cliente"),
-            ("cedula", "Cédula de Id."),
+            ("cedula", "Cédula/NIT"),
             ("dir", "Dirección"),
             ("tlf", "Teléfono"),
             ("email", "Correo electrónico")
@@ -412,55 +412,24 @@ class Client(QWidget):
 
     def show_details(self):
         from service import s
-        
-        label = LabelFactory()
-        button = ButtonFactory()
-
+        # Obtener el ID del cliente
         selected_items = self.client_table.selectedItems()
         if not selected_items:
             return
-
-        # Obtener el ID del cliente de la primera columna
         row = selected_items[0].row()
         client_id = self.client_table.item(row, 0).text()
-
-        # Consultar detalles del cliente en la base de datos
         client_details = s.show_client_details(client_id)
         if not client_details:
             return
 
-        # Crear un QWidget para mostrar los detalles
-        self.detail_window = QMainWindow(self)
-        self.detail_window.setFixedSize(675,250)
-        self.detail_window.setWindowModality(Qt.WindowModal)
-        self.detail_window.setWindowFlags(Qt.WindowCloseButtonHint | Qt.Tool)
-        self.detail_window.setWindowTitle("Detalles del Cliente")
-        self.detail_window.setStyleSheet("background-color: white;")
-
-        self.central_widget = QWidget()
-
-        self.detail_layout = QGridLayout()
-        self.detail_layout.setContentsMargins(10, 10, 10, 10)
-        self.central_widget.setLayout(self.detail_layout)
-        self.detail_window.setCentralWidget(self.central_widget)
-
-        # Mostrar los detalles del cliente
-        labels = ["ID Cliente", "Nombre", "Cédula de Id.", "Dirección", "Teléfono", "Email"]
-        positions = [(i+1, j) for i in range(6) for j in range(2)]
-
-        title_label = label.create_label("Detalles del Cliente", "Archivo Black", "bold_black", 18)
-        self.detail_layout.addWidget(title_label, 0, 0, Qt.AlignLeft)
-
+        details_text = ""
+        labels = ["ID Cliente", "Nombre", "Cédula/NIT", "Dirección", "Teléfono", "Email"]
         for i, detail in enumerate(client_details[0]):
-            detail_label = label.create_label(f"{labels[i]}: {detail}", "Archivo Medium", "medium_black", 14)
-            if labels[i] == "Dirección":
-                detail_label.setFixedSize(300, 65)
-                detail_label.setAlignment(Qt.AlignLeft)
-                detail_label.setWordWrap(True)
-            self.detail_layout.addWidget(detail_label, positions[i][0], positions[i][1], Qt.AlignLeft)
+            details_text += f"<b>{labels[i]}:</b> {detail}<br>"
+        
+        msgbox = MsgBoxFactory()
+        msg = msgbox.create_msg_box("information", "Detalles del Cliente", f"<h3>Detalles del Cliente</h3><p>{details_text}</p>",
+                                    QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole)
+        
+        msg.exec()
 
-        accept_button = button.create_button("Volver", "accept", None, 16, (100, 50))
-        accept_button.clicked.connect(self.detail_window.close)
-        self.detail_layout.addWidget(accept_button, 5, 1, Qt.AlignCenter | Qt.AlignRight)
-
-        self.detail_window.show()

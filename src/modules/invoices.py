@@ -331,8 +331,8 @@ class Invoice(QWidget):
         # Obtener datos del cliente y los productos seleccionados
         client_id = self.client_combobox.currentText().split(" - ")[0]
         product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
-        query = f"SELECT id_cliente, nombre_cliente, email FROM cliente WHERE id_cliente = '{client_id}';"
-        query2 = f"SELECT id_producto, nombre, precio FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
+        query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
+        query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
         
         client_data = s.cur.execute(query).fetchone()
         product_data = s.cur.execute(query2, product_ids).fetchall()
@@ -352,14 +352,13 @@ class Invoice(QWidget):
                 counter_cell_widget = self.product_table.cellWidget(row_index, 3)
                 unit_label = counter_cell_widget.findChild(type(self.total_amount_label))
                 units = int(unit_label.text()) if unit_label else 1
-                doc.add_item(Item(product[1], "Descripción del producto", units, float(product[2])))
+                doc.add_item(Item(product[1], product[3], units, float(product[2])))
         
-    
-        doc.client_info = ClientInfo(name=client_data[1], street="Dirección del cliente", city="Ciudad", state="Estado", email=client_data[2], client_id=client_data[0])
+        doc.client_info = ClientInfo(name=client_data[1], street=client_data[3], phone=client_data[4] , email=client_data[2], client_id=client_data[0], vat_tax_number=client_data[5])
         
         doc.service_provider_info = ServiceProviderInfo(name="Nombre del proveedor", street="Dirección del proveedor", city="Ciudad", state="Estado", vat_tax_number="Número de IVA", email="Email del proveedor", phone="Teléfono del proveedor")
 
-        tax = 20
+        tax = 5
         doc.set_item_tax_rate(tax)
 
         doc.set_bottom_tip("Gracias por su compra!")

@@ -406,57 +406,27 @@ class Product(QWidget):
 
     def show_details(self):
         from service import s
-        
-        label = LabelFactory()
-        button = ButtonFactory()
 
+        # Obtener el ID del producto
         selected_items = self.product_table.selectedItems()
         if not selected_items:
             return
-
-        # Obtener el ID del producto de la primera columna
         row = selected_items[0].row()
         product_id = self.product_table.item(row, 0).text()
-
-        # Consultar detalles del producto en la base de datos
         product_details = s.show_product_details(product_id)
         if not product_details:
             return
 
-        # Crear un QWidget para mostrar los detalles
-        self.detail_window = QMainWindow(self)
-        self.detail_window.setFixedSize(675,250)
-        self.detail_window.setWindowModality(Qt.WindowModal)
-        self.detail_window.setWindowFlags(Qt.WindowCloseButtonHint | Qt.Tool)
-        self.detail_window.setWindowTitle("Detalles del Producto")
-        self.detail_window.setStyleSheet("background-color: white;")
-
-        self.central_widget = QWidget()
-
-        self.detail_layout = QGridLayout()
-        self.detail_layout.setContentsMargins(10, 10, 10, 10)
-        self.central_widget.setLayout(self.detail_layout)
-        self.detail_window.setCentralWidget(self.central_widget)
-
-        # Mostrar los detalles del producto
+        details_text = ""
         labels = ["Código", "Nombre", "Descripción", "Precio"]
-        positions = [(i+1, j) for i in range(5) for j in range(2)]
-
-        title_label = label.create_label("Detalles del Producto", "Archivo Black", "bold_black", 18)
-        self.detail_layout.addWidget(title_label, 0, 0, Qt.AlignLeft)
-
         for i, detail in enumerate(product_details[0]):
-            detail_label = label.create_label(f"{labels[i]}: {detail}", "Archivo Medium", "medium_black", 14)
-            if labels[i] == "Descripción":
-                detail_label.setFixedSize(300, 65)
-                detail_label.setAlignment(Qt.AlignLeft)
-                detail_label.setWordWrap(True)
             if labels[i] == "Precio":
-                detail_label.setText(f"{labels[i]}: ${detail}")
-            self.detail_layout.addWidget(detail_label, positions[i][0], positions[i][1], Qt.AlignLeft)
-
-        accept_button = button.create_button("Volver", "accept", None, 16, (100, 50))
-        accept_button.clicked.connect(self.detail_window.close)
-        self.detail_layout.addWidget(accept_button, 4, 1, Qt.AlignCenter | Qt.AlignRight)
-
-        self.detail_window.show()
+                details_text += f"<b>{labels[i]}:</b> ${detail}<br>"
+            else:
+                details_text += f"<b>{labels[i]}:</b> {detail}<br>"
+        
+        msgbox = MsgBoxFactory()
+        msg = msgbox.create_msg_box("information", "Detalles del Producto", f"<h3>Detalles del Producto</h3><p>{details_text}</p>",
+                                    QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole)
+        
+        msg.exec()

@@ -3,10 +3,11 @@ Módulo que administra los estilos y creación de los mensajes de notificación.
 """
 
 from PySide6.QtWidgets import QMessageBox, QPushButton, QLabel
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 
 class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
     def __init__(self):
+        super().__init__()
         self.msg_box_styles = {
                         "information" : """
                             QMessageBox {
@@ -66,6 +67,7 @@ class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
     
     def create_msg_box(self, style, title, text, icon, font, font_size, button, button_role = None):
         msg_box = QMessageBox(icon, title, text)
+        msg_box.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         msg_box.addButton(button, button_role)
         msg_box.setFont(QFont(font, font_size))
         msg_box.setStyleSheet(self.msg_box_styles[style])
