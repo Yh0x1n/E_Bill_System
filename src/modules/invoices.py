@@ -59,9 +59,9 @@ class Invoice(QWidget):
         self.btn_update_lists.clicked.connect(self.update_lists)
         self.fieldsLayout.addWidget(self.btn_update_lists, 1, 3, Qt.AlignLeft)
 
-        self.btn_generate_invoice = button.create_button("Generar", "accept", None, 12, (75, 35))
+        self.btn_generate_invoice = button.create_button("Generar", "accept", None, 12, (100, 35))
         self.btn_generate_invoice.clicked.connect(self.generate_invoice)
-        self.fieldsLayout.addWidget(self.btn_generate_invoice, 4, 0, Qt.AlignLeft)
+        self.fieldsLayout.addWidget(self.btn_generate_invoice, 5, 1, 1, 4, Qt.AlignRight)
 
         descriptions = ["Agregar cliente", "Agregar producto", "Actualizar listas"]
         buttons = [self.btn_add_client, self.btn_add_product, self.btn_update_lists]
@@ -148,9 +148,10 @@ class Invoice(QWidget):
         # Crear y configurar la tabla
         self.product_table = QTableWidget()
         self.product_table.setRowCount(len(df))
-        self.product_table.setColumnCount(len(df.columns) + 1)  # Add an extra column for checkboxes
-        self.product_table.setHorizontalHeaderLabels(["N°", "Nombre", "Precio", "Seleccionar"])
+        self.product_table.setColumnCount(len(df.columns) + 2)  # Add two extra columns for units counter and checkboxes
+        self.product_table.setHorizontalHeaderLabels(["N°", "Nombre", "Precio", "Unidades", "Seleccionar"])
         self.product_table.setMinimumSize(600, 200)
+        self.product_table.setContentsMargins(0, 0, 0, 0)
         self.product_table.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.product_table.setFont(QFont("Archivo Medium", 12))
         self.product_table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -176,17 +177,7 @@ class Invoice(QWidget):
                                                                     }""")
         for i in range(self.product_table.rowCount()):
             self.product_table.setRowHeight(i, 40)
-
-        # Function to update the total amount
-        def update_total_amount():
-            total = 0
-            for i in range(self.product_table.rowCount()):
-                cell_widget = self.product_table.cellWidget(i, 3)
-                if cell_widget and cell_widget.findChild(QCheckBox).isChecked():
-                    price_str = self.product_table.item(i, 2).text().replace('$', '')
-                    total += float(price_str)
-            self.total_amount_label.setText(f"Total: ${total:.2f}")
-
+        
         # Llenar la tabla con datos y agregar checkboxes
         for i, row in df.iterrows():
             for j, value in enumerate(row):
@@ -195,23 +186,43 @@ class Invoice(QWidget):
 
             # Crear y agregar el checkbox
             checkbox = QCheckBox()
-            checkbox.stateChanged.connect(update_total_amount)
+            checkbox.stateChanged.connect(self.update_total_amount)
 
             #Crear el widget para el checkbox
-            cell_widget = QWidget()
-            cell_layout = QHBoxLayout(cell_widget)
-            cell_layout.setAlignment(Qt.AlignCenter)
-            cell_layout.setContentsMargins(0, 0, 0, 0)
-            cell_layout.addWidget(checkbox)
-            self.product_table.setCellWidget(i, 3, cell_widget)
+            checkbox_cell_widget = QWidget()
+            checkbox_cell_layout = QHBoxLayout(checkbox_cell_widget)
+            checkbox_cell_layout.setAlignment(Qt.AlignCenter)
+            checkbox_cell_layout.setContentsMargins(0, 0, 0, 0)
+            checkbox_cell_layout.addWidget(checkbox)
+            self.product_table.setCellWidget(i, 4, checkbox_cell_widget)
+
+            #Crear el widget para los botones + y - del contador
+            counter_cell_widget = QWidget()
+            counter_cell_layout = QHBoxLayout(counter_cell_widget)   
+            counter_cell_layout.setAlignment(Qt.AlignCenter)
+            counter_cell_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # Crear nuevos botones y etiqueta para cada fila
+            btn_minus = ButtonFactory().create_button("-", "default_black", None, min_size=(10, 10))
+            btn_plus = ButtonFactory().create_button("+", "default_black", None, min_size=(10, 10))
+            unit_label = l.create_label("1", "Archivo Medium", "medium_black", 12)
+            
+            # Conectar los botones a funciones que actualicen unit_label (cada función debe saber a qué etiqueta modificar)
+            btn_minus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(max(0, int(lbl.text()) - 1))), self.update_total_amount()))
+            btn_plus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(int(lbl.text()) + 1)), self.update_total_amount()))
+            
+            counter_cell_layout.addWidget(btn_minus)
+            counter_cell_layout.addWidget(unit_label)
+            counter_cell_layout.addWidget(btn_plus)
+            self.product_table.setCellWidget(i, 3, counter_cell_widget)
         
         self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         def handle_table_click(row, col):
-            if col == 3:
-                cell_widget = self.product_table.cellWidget(row, col)
-                if cell_widget:
-                    checkbox = cell_widget.findChild(QCheckBox)
+            if col == 4:
+                checkbox_cell_widget = self.product_table.cellWidget(row, col)
+                if checkbox_cell_widget:
+                    checkbox = checkbox_cell_widget.findChild(QCheckBox)
                     if checkbox:
                         checkbox.setChecked(not checkbox.isChecked())
 
@@ -224,13 +235,36 @@ class Invoice(QWidget):
                 price_item.setText(f"${price_item.text()}")
         
         # Perform initial total calculation
-        update_total_amount()
+        self.update_total_amount()
 
         self.invoiceLayout.addLayout(self.listLayout)
         self.listLayout.addWidget(self.product_table)
+        
+    # Method to update the total amount
+    def update_total_amount(self):
+        total = 0
+        for i in range(self.product_table.rowCount()):
+            checkbox_cell_widget = self.product_table.cellWidget(i, 4)
+            if checkbox_cell_widget:
+                checkbox = checkbox_cell_widget.findChild(QCheckBox)
+                if checkbox and checkbox.isChecked():
+                    # Obtener el precio, eliminando el signo de dólar
+                    price_item = self.product_table.item(i, 2)
+                    price = float(price_item.text().replace('$', '')) if price_item else 0.0
+                    # Obtener el valor del contador de unidades de la columna 3
+                    counter_cell_widget = self.product_table.cellWidget(i, 3)
+                    # Se asume que unit_label es un QLabel dentro del widget del contador.
+                    unit_label = counter_cell_widget.findChild(type(self.total_amount_label))
+                    if unit_label:
+                        count = int(unit_label.text())
+                    else:
+                        count = 1  # en caso que no se encuentre, se suma al menos 1
+                    total += price * count
+                    
+        self.total_amount_label.setText(f"Total: ${total:.2f}")
     
     def update_lists(self): #Método que actualiza la combobox y la lista
-        from service import s
+        l = LabelFactory()
 
         # Actualizar la combobox de clientes
         self.client_combobox.clear()
@@ -241,11 +275,46 @@ class Invoice(QWidget):
         # Actualizar la tabla de productos
         df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
         self.product_table.setRowCount(len(df))
+
+        for i in range(self.product_table.rowCount()):
+            self.product_table.setRowHeight(i, 40)
+
         for i, row in df.iterrows():
             for j, value in enumerate(row):
                 item = QTableWidgetItem(str(value))
                 self.product_table.setItem(i, j, item)
+            
+            #Actualizar las checkboxes
+            checkbox = QCheckBox()
+            checkbox.stateChanged.connect(self.update_total_amount)
 
+            checkbox_cell_widget = QWidget()
+            checkbox_cell_layout = QHBoxLayout(checkbox_cell_widget)
+            checkbox_cell_layout.setAlignment(Qt.AlignCenter)
+            checkbox_cell_layout.setContentsMargins(0, 0, 0, 0)
+            checkbox_cell_layout.addWidget(checkbox)
+            self.product_table.setCellWidget(i, 4, checkbox_cell_widget)
+
+            #Actualizar el contador
+            counter_cell_widget = QWidget()
+            counter_cell_layout = QHBoxLayout(counter_cell_widget)   
+            counter_cell_layout.setAlignment(Qt.AlignCenter)
+            counter_cell_layout.setContentsMargins(0, 0, 0, 0)
+            
+            # Crear nuevos botones y etiqueta para cada fila
+            btn_minus = ButtonFactory().create_button("-", "default_black", None, min_size=(10, 10))
+            btn_plus = ButtonFactory().create_button("+", "default_black", None, min_size=(10, 10))
+            unit_label = l.create_label("1", "Archivo Medium", "medium_black", 12)
+            
+            # Conectar los botones a funciones que actualicen unit_label (cada función debe saber a qué etiqueta modificar)
+            btn_minus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(max(0, int(lbl.text()) - 1))), self.update_total_amount()))
+            btn_plus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(int(lbl.text()) + 1)), self.update_total_amount()))
+            
+            counter_cell_layout.addWidget(btn_minus)
+            counter_cell_layout.addWidget(unit_label)
+            counter_cell_layout.addWidget(btn_plus)
+            self.product_table.setCellWidget(i, 3, counter_cell_widget)
+            
         for i in range(self.product_table.rowCount()):
             price_item = self.product_table.item(i, 2)
             if price_item:
@@ -261,7 +330,7 @@ class Invoice(QWidget):
 
         # Obtener datos del cliente y los productos seleccionados
         client_id = self.client_combobox.currentText().split(" - ")[0]
-        product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 3).findChild(QCheckBox).isChecked()]
+        product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
         query = f"SELECT id_cliente, nombre_cliente, email FROM cliente WHERE id_cliente = '{client_id}';"
         query2 = f"SELECT id_producto, nombre, precio FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
         
@@ -277,7 +346,13 @@ class Invoice(QWidget):
         doc.invoice_info = InvoiceInfo(invoice_id=invoice_id, invoice_datetime=invoice_datetime, due_datetime=due_datetime)
         
         for product in product_data:
-            doc.add_item(Item(product[1], "Descripción del producto", 1, float(product[2])))
+            # Obtener las unidades seleccionadas desde unit_label
+            row_index = next((i for i in range(self.product_table.rowCount()) if self.product_table.item(i, 0).text() == product[0]), None)
+            if row_index is not None:
+                counter_cell_widget = self.product_table.cellWidget(row_index, 3)
+                unit_label = counter_cell_widget.findChild(type(self.total_amount_label))
+                units = int(unit_label.text()) if unit_label else 1
+                doc.add_item(Item(product[1], "Descripción del producto", units, float(product[2])))
         
     
         doc.client_info = ClientInfo(name=client_data[1], street="Dirección del cliente", city="Ciudad", state="Estado", email=client_data[2], client_id=client_data[0])

@@ -194,6 +194,7 @@ class MainWindow(QMainWindow):
 
             self.clientBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
             self.clientBackButton.clicked.connect(self.toggle_client_frame)
+            self.clientBackButton.setShortcut("Esc")
 
             self.dashboardMidLayout.addWidget(self.clientBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
 
@@ -228,6 +229,7 @@ class MainWindow(QMainWindow):
 
             self.productBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
             self.productBackButton.clicked.connect(self.toggle_products_frame)
+            self.productBackButton.setShortcut("Esc")
 
             self.dashboardMidLayout.addWidget(self.productBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
 
@@ -262,6 +264,7 @@ class MainWindow(QMainWindow):
 
             self.invoiceBackButton = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
             self.invoiceBackButton.clicked.connect(self.toggle_create_invoices_frame)
+            self.invoiceBackButton.setShortcut("Esc")
 
             self.dashboardMidLayout.addWidget(self.invoiceBackButton, 0, Qt.AlignBottom | Qt.AlignLeft)
 
@@ -282,6 +285,8 @@ class MainWindow(QMainWindow):
 
             for element in dashboard_elements:
                 element.setVisible(False)
+        
+        self.invoiceFrame.update_lists()
     
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
