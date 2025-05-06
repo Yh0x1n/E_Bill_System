@@ -299,6 +299,34 @@ class SimpleInvoice(SimpleDocTemplate):
                     )
                 )
             )
+    
+    def _build_bottom_tip(self):
+        if self._bottom_tip:
+            self._story.append(Spacer(5, 5))
+            self._story.append(
+                Paragraph(
+                    self._bottom_tip,
+                    ParagraphStyle(
+                        'BottomTip',
+                        parent=self._defined_styles.get('Normal'),
+                        alignment=self._bottom_tip_align
+                    )
+                )
+            )
+
+    def add_image(self, image_path, width, height):
+        """
+        Agrega una imagen al documento.
+        
+        :param image_path: Ruta de la imagen.
+        :param width: Ancho de la imagen en puntos.
+        :param height: Alto de la imagen en puntos.
+        """
+        from reportlab.platypus import Image
+        img = Image(image_path)
+        img.drawWidth = width
+        img.drawHeight = height
+        self._story.append(img)
 
     def finish(self):
         self._story = []
@@ -308,6 +336,23 @@ class SimpleInvoice(SimpleDocTemplate):
         self._build_items()
         self._build_transactions()
         self._build_bottom_tip()
+
+        kwargs = {}
+        if self.is_paid:
+            kwargs['onFirstPage'] = PaidStamp(7 * inch, 5.8 * inch)
+
+        self.build(self._story, **kwargs)
+
+    def finish(self):
+        self._story = []
+
+        self._build_invoice_info()
+        self._build_service_provider_and_client_info()
+        self._build_items()
+        self._build_transactions()
+        self._build_bottom_tip()
+
+        self.add_image("src/assets/pictures/AqualabLogo.jpg", 50, 50)
 
         kwargs = {}
         if self.is_paid:

@@ -51,7 +51,7 @@ class PaidStamp(object):
         canvas.setFillColor(colors.red)
         canvas.setStrokeColor(colors.red)
         canvas.rotate(45)
-        canvas.drawString(self.x, self.y, 'PAID')
+        canvas.drawString(self.x, self.y, 'PAGADO')
         canvas.setLineWidth(4)
         canvas.setLineJoin(1)  # Round join
         canvas.rect(self.x - .25 * inch, self.y - .25 * inch, width=2*inch, height=inch)

@@ -20,6 +20,7 @@ class Service: # Clase que realiza la conexión a la DB
         except FileNotFoundError as fnf_error:
             print(fnf_error)
             raise
+
         except sql.Error as db_error:
             print(f"Error al conectar con la base de datos: {db_error}")
             raise
@@ -28,7 +29,7 @@ class Service: # Clase que realiza la conexión a la DB
             #Creación de tablas
             self.cur.execute("""
                 CREATE TABLE IF NOT EXISTS usuario (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id TEXT PRIMARY KEY,
                     username TEXT NOT NULL,
                     email TEXT NOT NULL,
                     password TEXT NOT NULL,
@@ -183,11 +184,14 @@ class Service: # Clase que realiza la conexión a la DB
     def get_last_facturas(self):
         self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
         return self.cur.fetchall()
+
+    def get_users(self):
+        return self.cur.execute("SELECT id, username, email FROM usuario;").fetchall()
     
     def close(self): #Cierra la conexión
         if self.conn:
             self.conn.close()
             print("Conexión a la base de datos cerrada correctamente.")
-    
+
 
 s = Service()

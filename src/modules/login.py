@@ -187,6 +187,7 @@ class LoginWindow(QMainWindow):
             error_msg.exec()
 
     def register(self): #Método de acción de registro de usuario
+        import random
         msg = MsgBoxFactory()
 
         self.username = self.username_input.text()
@@ -208,7 +209,8 @@ class LoginWindow(QMainWindow):
             error_msg.exec()
         else:
             try:
-                s.cur.execute("INSERT INTO usuario (username, email, password) VALUES (?, ?, ?);", (self.username, self.email, self.password))
+                user_id = f"USR-{str(random.randint(100,999))}"
+                s.cur.execute("INSERT INTO usuario (id, username, email, password) VALUES (?, ?, ?, ?);", (user_id, self.username, self.email, self.password))
                 s.conn.commit()
                 success_msg = msg.create_msg_box("information", "Información", "Usuario creado exitósamente.",
                                                  QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)

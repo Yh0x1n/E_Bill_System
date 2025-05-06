@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
 
     def createDashboard(self): # Función para crear el dashboard donde irán ubicados los botones y etiquetas principales
         self.dashboard = QFrame(self)
+        self.dashboard.setObjectName("dashboard")
         self.dashboard.setStyleSheet("background-color: white;")
         self.dashboard.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.dashboard.setGeometry(350, 0, self.width() - 350, self.height())
@@ -180,6 +181,7 @@ class MainWindow(QMainWindow):
 
         self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
         self.btn_settings.setToolTip("Ajustes")
+        self.btn_settings.clicked.connect(self.open_settings)
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
     def toggle_frame(self, frame_attr, frame_class, back_button_attr, toggle_method, dashboard_elements):
@@ -262,6 +264,11 @@ class MainWindow(QMainWindow):
 
         self.profile_pic.setPixmap(rounded)
     
+    def open_settings(self):
+        from settings import SettingsWindow
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()
+
     def logout(self):
         from login import LoginWindow
 
