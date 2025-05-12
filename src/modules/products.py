@@ -7,6 +7,8 @@ from PySide6.QtGui import QFont
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
+from styles.lists import apply_table_style
+from export import Export
 
 class Product(QWidget):
     def __init__(self, parent=None):
@@ -59,8 +61,12 @@ class Product(QWidget):
         self.btn_delete.clicked.connect(self.delete_product)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        description = ["Editar", "Agregar", "Eliminar", "Ajustes"]
-        buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings]
+        self.btn_export = button.create_button("", "default_black", "src/assets/icons/excel.png", min_size=(75, 75))
+        self.btn_export.clicked.connect(self.export)
+        self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
+
+        description = ["Editar", "Agregar", "Eliminar", "Ajustes", "Exportar a Excel"]
+        buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings, self.btn_export]
         
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
@@ -88,23 +94,6 @@ class Product(QWidget):
         self.product_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.product_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.product_table.setSelectionMode(QTableWidget.SingleSelection)
-        self.product_table.setStyleSheet("""QTableWidget::item:selected {
-                                                                        background-color: #0078d7;
-                                                                        color: white;
-                                                                    }
-                                                                    QTableWidget::item:hover {
-                                                                        background-color: #f0f0f0;
-                                                                    }
-                                                                    QTableWidget::item {
-                                                                        padding: 10px;
-                                                                    }
-                                                                    QTableWidget {
-                                                                        border: 1px solid #d0d0d0;
-                                                                        border-radius: 5px;
-                                                                        background-color: white;
-                                                                        color: black;
-                                                                        padding: 5px;
-                                                                    }""")
 
         # Llenar la tabla con datos
         for i, row in df.iterrows():
@@ -120,6 +109,9 @@ class Product(QWidget):
     
         self.listLayout.addWidget(self.product_table)
         self.product_table.itemDoubleClicked.connect(lambda _: self.show_details())
+
+        # Apply styles to the product table
+        apply_table_style(self.product_table)
     
     def add_product(self):
         label = LabelFactory()
@@ -199,6 +191,12 @@ class Product(QWidget):
                     for i, row in df.iterrows():
                         for j, value in enumerate(row):
                             self.product_table.setItem(i, j, QTableWidgetItem(str(value)))
+
+                    # Formatear el precio con un signo de dólar
+                    for i in range(self.product_table.rowCount()):
+                        price_item = self.product_table.item(i, 2)
+                        if price_item:
+                            price_item.setText(f"${price_item.text()}")
 
                 except Exception as e:
                     print("Error al insertar el producto:", e)
@@ -332,6 +330,11 @@ class Product(QWidget):
                     for j, value in enumerate(row):
                         self.product_table.setItem(i, j, QTableWidgetItem(str(value)))
 
+                # Formatear el precio con un signo de dólar
+                for i in range(self.product_table.rowCount()):
+                    price_item = self.product_table.item(i, 2)
+                    if price_item:
+                        price_item.setText(f"${price_item.text()}")
             except Exception as e:
                 print("Error al editar el producto:", e)
 
@@ -430,3 +433,6 @@ class Product(QWidget):
                                     QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole)
         
         msg.exec()
+
+    def export(self):
+        Export().export_data("products")

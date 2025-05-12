@@ -185,8 +185,30 @@ class Service: # Clase que realiza la conexión a la DB
         self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
         return self.cur.fetchall()
 
-    def get_users(self):
-        return self.cur.execute("SELECT id, username, email FROM usuario;").fetchall()
+    def edit_user(self, user_id, username, email):
+        #TO-DO: ACTUALIZAR ESTE MÉTODO
+        fields = {
+            "username": username,
+            "email": email
+        }
+        set_clause = []
+        params = {}
+        
+        for column, value in fields.items():
+            if value is not None and value != "":
+                set_clause.append(f"{column} = :{column}")
+                params[column] = value
+
+        if not set_clause:
+            return
+
+        params["id"] = user_id
+        query = f"UPDATE usuario SET {', '.join(set_clause)} WHERE id = :id"
+        self.cur.execute(query, params)
+    
+    def show_user_details(self, user_id):
+        self.cur.execute("SELECT * FROM usuario where id = ?", user_id)
+        return self.cur.fetchall()
     
     def close(self): #Cierra la conexión
         if self.conn:

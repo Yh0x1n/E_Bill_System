@@ -8,6 +8,8 @@ from PySide6.QtGui import QFont
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
+from styles.lists import apply_table_style
+from export import Export
 
 class Client(QWidget):
     def __init__(self, parent=None):
@@ -60,8 +62,12 @@ class Client(QWidget):
         self.btn_delete.clicked.connect(self.delete_client)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        description = ["Editar", "Agregar", "Eliminar", "Ajustes"]
-        buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings]
+        self.btn_export = button.create_button("", "default_black", "src/assets/icons/excel.png", min_size=(75, 75))
+        self.btn_export.clicked.connect(self.export)
+        self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
+
+        description = ["Editar", "Agregar", "Eliminar", "Ajustes", "Exportar a Excel"]
+        buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings, self.btn_export]
         
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
@@ -89,23 +95,6 @@ class Client(QWidget):
         self.client_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.client_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.client_table.setSelectionMode(QTableWidget.SingleSelection)
-        self.client_table.setStyleSheet("""QTableWidget::item:selected {
-                                                                        background-color: #0078d7;
-                                                                        color: white;
-                                                                    }
-                                                                    QTableWidget::item:hover {
-                                                                        background-color: #f0f0f0;
-                                                                    }
-                                                                    QTableWidget::item {
-                                                                        padding: 10px;
-                                                                    }
-                                                                    QTableWidget {
-                                                                        border: 1px solid #d0d0d0;
-                                                                        border-radius: 5px;
-                                                                        background-color: white;
-                                                                        color: black;
-                                                                        padding: 5px;
-                                                                    }""")
 
         # Llenar la tabla con datos
         for i, row in df.iterrows():
@@ -115,6 +104,9 @@ class Client(QWidget):
         self.client_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.listLayout.addWidget(self.client_table)
         self.client_table.itemDoubleClicked.connect(lambda _: self.show_details())
+
+        # Apply styles to the client table
+        apply_table_style(self.client_table)
     
     def add_client(self):
         label = LabelFactory()
@@ -432,4 +424,6 @@ class Client(QWidget):
                                     QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole)
         
         msg.exec()
-
+    
+    def export(self):
+        Export().export_data("clients")

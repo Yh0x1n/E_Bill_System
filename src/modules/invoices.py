@@ -9,6 +9,7 @@ from service import s
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 import random, os, sys, pandas as pd
+from styles.lists import apply_table_style
 
 class Invoice(QWidget):
     def __init__(self, parent=None):
@@ -76,7 +77,6 @@ class Invoice(QWidget):
         self.fieldsLayout = QGridLayout()
         self.fieldsLayout.setContentsMargins(0, 0, 0, 0)
         self.fieldsLayout.setSpacing(10)
-        self.fieldsLayout.setColumnStretch(0, 2)
 
         #Combobox de cliente
         self.client_combobox = QComboBox()
@@ -157,24 +157,9 @@ class Invoice(QWidget):
         self.product_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.product_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.product_table.setSelectionMode(QTableWidget.SingleSelection)
-        self.product_table.setStyleSheet("""QTableWidget::item:selected {
-                                                                        background-color: #0078d7;
-                                                                        color: white;
-                                                                    }
-                                                                    QTableWidget::item:hover {
-                                                                        background-color: #f0f0f0;
-                                                                        color: black;
-                                                                    }
-                                                                    QTableWidget::item {
-                                                                        padding: 10px;
-                                                                    }
-                                                                    QTableWidget {
-                                                                        border: 1px solid #d0d0d0;
-                                                                        border-radius: 5px;
-                                                                        background-color: white;
-                                                                        color: black;
-                                                                        padding: 5px;
-                                                                    }""")
+
+        apply_table_style(self.product_table)
+
         for i in range(self.product_table.rowCount()):
             self.product_table.setRowHeight(i, 40)
         
@@ -216,7 +201,9 @@ class Invoice(QWidget):
             counter_cell_layout.addWidget(btn_plus)
             self.product_table.setCellWidget(i, 3, counter_cell_widget)
         
-        self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            self.product_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+            #self.product_table.horizontalHeader().setStretchLastSection(True)
 
         def handle_table_click(row, col):
             if col == 4:
