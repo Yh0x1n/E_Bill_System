@@ -182,7 +182,13 @@ class Service: # Clase que realiza la conexión a la DB
             print("Error al insertar la factura:", e)
 
     def get_last_facturas(self):
-        self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 5")
+        self.cur.execute("""
+            SELECT f.id_factura, c.nombre_cliente
+            FROM facturas f
+            JOIN cliente c ON f.id_cliente = c.id_cliente
+            ORDER BY f.id_factura DESC
+            LIMIT 5
+        """)
         return self.cur.fetchall()
 
     def edit_user(self, user_id, username, email):

@@ -39,7 +39,7 @@ class ButtonFactory(QPushButton, QLabel):
                             color: white;
                             border-radius: 0px;
                             font-family: "Archivo Medium";
-                            text-align: right;
+                            text-align: right bottom;
                         }
                         QPushButton:hover {
                             text-decoration: underline;

@@ -149,6 +149,7 @@ class MainWindow(QMainWindow):
         self.btn_logout.clicked.connect(self.logout)
 
         self.btn_ventas = button.create_button("Tus últimas ventas", style="sales", font_size=14, min_size=(200, 0))
+        self.btn_ventas.setFixedWidth(200)
         self.sideMidTopLayout.addWidget(self.btn_ventas, 0, Qt.AlignLeft)
         self.btn_ventas.clicked.connect(self.display_ventas)
 
@@ -156,10 +157,12 @@ class MainWindow(QMainWindow):
         self.sideMidTopLayout.addWidget(self.btn_gestionar_facturas, 0, Qt.AlignLeft)
         
         self.btn_ayuda = button.create_button("Ayuda", style = "sales", font_size=14, min_size=(100,0))
+        self.btn_ayuda.setFixedWidth(100)
         self.sideMidTopLayout.addWidget(self.btn_ayuda, 0, Qt.AlignLeft)
 
         self.btn_about = button.create_button("Acerca de", style = "sales", font_size=14, min_size=(130,0))
         self.btn_about.clicked.connect(self.about)
+        self.btn_about.setFixedWidth(130)
         self.sideMidTopLayout.addWidget(self.btn_about, 0, Qt.AlignLeft)
 
         # BOTONES DEL DASHBOARD
@@ -281,6 +284,8 @@ class MainWindow(QMainWindow):
             self.login_window.show()
 
     def display_ventas(self):
+        label = LabelFactory()
+
         # Método que alterna entre mostrar y ocultar las últimas facturas
         if hasattr(self, 'ventasWidget') and self.ventasWidget.isVisible():
             # Si las facturas están visibles, ocultarlas y mostrar los botones originales
@@ -290,6 +295,8 @@ class MainWindow(QMainWindow):
                 widget = self.sideMidTopLayout.itemAt(i).widget()
                 if widget and widget != self.btn_ventas:
                     widget.show()
+            self.btn_ventas.setFixedSize(200, 80)
+
         else:
             # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
             for i in range(self.sideMidTopLayout.count()):
@@ -302,19 +309,18 @@ class MainWindow(QMainWindow):
                 self.ventasWidget = QWidget()
                 self.ventasLayout = QVBoxLayout(self.ventasWidget)
                 self.ventasLayout.setContentsMargins(0, 0, 0, 0)
-                self.ventasLayout.setSpacing(5)
-                self.sideMidTopLayout.addWidget(self.ventasWidget)
+                self.ventasLayout.setAlignment(Qt.AlignCenter)
+                self.ventasLayout.setSpacing(50)
+                self.sideMidTopLayout.addWidget(self.ventasWidget, Qt.AlignCenter)
 
                 from service import s  # Importar el módulo de base de datos
                 facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
 
                 # Mostrar las facturas en etiquetas
                 for factura in facturas:
-                    factura_label = QLabel(f"Factura #{factura['id']}: {factura['cliente']} - ${factura['total']}")
-                    factura_label.setStyleSheet("font-size: 14px; color: black;")
-                    self.ventasLayout.addWidget(factura_label)
+                    factura_label = label.create_label(f"{factura[0]}: {factura[1]}", "Archivo Medium", "medium_white", 12)
+                    self.ventasLayout.addWidget(factura_label, Qt.AlignCenter | Qt.AlignTop)
             self.sideMidTopLayout.addWidget(self.ventasWidget)
-            self.ventasWidget.setVisible(True)
             self.ventasWidget.setVisible(True)
             
     def initDateTime(self): # Función para mostrar la fecha actual

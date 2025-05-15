@@ -351,3 +351,37 @@ class Invoice(QWidget):
         doc.set_bottom_tip("Gracias por su compra!")
 
         doc.finish()
+
+        pdf_path = f"{invoice_id}.pdf"
+        subtotal = sum(float(product[2]) * unidades for product, unidades in zip(product_data, [int(self.product_table.cellWidget(i, 3).findChild(type(self.total_amount_label)).text()) for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]))
+        
+        total = subtotal * (1 + tax / 100)
+
+        self.save_invoice(
+            invoice_id=invoice_id,
+            fecha_emision=invoice_datetime,
+            id_cliente=client_data[0],
+            id_producto=",".join(product_ids),  # O ajusta según tu modelo
+            pdf_path=pdf_path,
+            emisor="ID_DEL_EMISOR",  # Ajusta según tu lógica de usuario
+            subtotal=subtotal,
+            iva=tax,
+            total=total
+        )
+    
+    def save_invoice(self, invoice_id, fecha_emision, id_cliente, id_producto, pdf_path, emisor, subtotal, iva, total):
+        # Lee el PDF como binario
+        with open(pdf_path, "rb") as f:
+            pdf_blob = f.read()
+        # Guarda en la base de datos usando el método del servicio
+        s.insert_invoice(
+            id_factura=invoice_id,
+            fecha_emision=fecha_emision,
+            id_cliente=id_cliente,
+            id_producto=id_producto,
+            comprobante=pdf_blob,
+            emisor=emisor,
+            subtotal=subtotal,
+            iva=iva,
+            total=total
+        )
