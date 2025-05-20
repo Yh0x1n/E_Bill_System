@@ -6,13 +6,11 @@ Módulo con un widget de ventana para configurar el tema, gestionar los usuarios
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QLineEdit, QComboBox, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QMainWindow, QMessageBox
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
-from window import MainWindow
 import pandas as pd
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
 from service import s
-import qdarktheme
 from styles.lists import apply_table_style
 
 class SettingsWindow(QWidget):
@@ -25,7 +23,6 @@ class SettingsWindow(QWidget):
         Constructor de la ventana de configuración.
         :param main_window_instance: Instancia de la ventana principal (MainWindow).
         """
-
         super().__init__()
         self.setWindowTitle("Configuración")
         self.setGeometry(100, 100, 300, 200)
@@ -38,15 +35,18 @@ class SettingsWindow(QWidget):
     def initUI(self):
 
         # Combobox para colocar el tema
-        self.theme_box = QComboBox()
-        self.theme_box.setPlaceholderText("Tema de la aplicación")
-        self.theme_box.addItems(["Tema Claro", "Tema Oscuro"])
-        self.settings_layout.addWidget(self.theme_box, 0, 0, 1, 2)  # Fila 0, columna 0-1
+        self.provider_label = QLabel("Información del proveedor")
+        self.settings_layout.addWidget(self.provider_label, 0, 0)  # Fila 0, columna 0-1
 
         # Botón para aplicar cambios de tema
-        self.apply_theme_button = QPushButton("Aplicar Tema")
-        self.apply_theme_button.clicked.connect(self.apply_theme)
-        self.settings_layout.addWidget(self.apply_theme_button, 0, 2)  # Fila 0, columna 2
+        self.show_provider_info_button = QPushButton("Mostrar")
+        self.show_provider_info_button.clicked.connect(self.show_provider_info)
+        self.settings_layout.addWidget(self.show_provider_info_button, 0, 1)  # Fila 0, columna 2
+
+        #Botón para editar la información del proveedor
+        self.edit_provider_info_button = QPushButton("Editar")
+        self.edit_provider_info_button.clicked.connect(self.set_provider_info)
+        self.settings_layout.addWidget(self.edit_provider_info_button, 0, 2) # Fila 0, columna 3
 
         # Gestión de usuarios
         self.user_label = QLabel("Gestión de Usuarios:")
@@ -63,7 +63,7 @@ class SettingsWindow(QWidget):
         self.settings_layout.addWidget(self.edit_user_button, 2, 1)  # Fila 2, columna 2
 
         # Información del proveedor
-        self.provider_info_label = QLabel("Información del Proveedor:")
+        self.provider_info_label = QLabel("Información de usuarios:")
         self.settings_layout.addWidget(self.provider_info_label, 3, 0, 1, 3)  # Fila 3, columna 0-2
 
     def init_user_list(self):
@@ -85,6 +85,10 @@ class SettingsWindow(QWidget):
                 self.user_table.setItem(i, j, QTableWidgetItem(str(value)))
 
         self.settings_layout.addWidget(self.user_table, 4, 0, 1, 3)  # Fila 4, columna 0-2
+
+        self.btn_salir = QPushButton("Salir")
+        self.btn_salir.clicked.connect(self.close)
+        self.settings_layout.addWidget(self.btn_salir, 5, 2, 1, 3)
 
         # Ajustar el tamaño de las columnas según la longitud de sus campos
         self.user_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -156,8 +160,6 @@ class SettingsWindow(QWidget):
         buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
 
         def command():
-            from service import s
-            import pandas as pd
 
             # Obtener los valores de cada campo
             fields_values = [
@@ -216,8 +218,128 @@ class SettingsWindow(QWidget):
 
         self.w.show()
 
+    #TO-DO: CREAR LA LÓGICA DE ESTOS MÓDULOS
     def delete_user(self):
         pass
 
-    def apply_theme(self):  # Método para aplicar hojas de estilo de tema claro y oscuro
-        pass
+    def set_provider_info(self):
+        """
+        Método para establecer la información del proveedor.
+        """
+
+        label = LabelFactory()
+        button = ButtonFactory()
+        msgbox = MsgBoxFactory()
+
+        input_stylesheet = ("""
+                color: black;
+                background-color: white;
+                border: 1px solid black;
+                border-radius: 5px;
+                font-family: "Archivo Medium";
+                font-size: 16px;
+                padding: 5px;
+                """)
+
+        self.provider_window = QMainWindow()
+        self.provider_window.setWindowTitle("Editar Información del Proveedor")
+        self.provider_window.setStyleSheet("background-color: white;")
+        self.provider_window.setWindowFlags(Qt.WindowCloseButtonHint)
+
+        central_widget = QWidget(self.provider_window)
+        central_widget.setStyleSheet("background-color: #f0f0f0; border-radius: 20px;")
+        self.provider_window.setCentralWidget(central_widget)
+
+        layout = QGridLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
+        central_widget.setLayout(layout)
+
+        # Obtener datos actuales del proveedor (si existen)
+        s.cur.execute("SELECT nombre, nit, direccion, telefono, email FROM proveedor LIMIT 1;")
+        proveedor = s.cur.fetchone()
+        proveedor = proveedor if proveedor else ("", "", "", "", "")
+
+        fields = [
+            ("nombre", "Nombre", proveedor[0]),
+            ("nit", "NIT", proveedor[1]),
+            ("direccion", "Dirección", proveedor[2]),
+            ("telefono", "Teléfono", proveedor[3]),
+            ("email", "Email", proveedor[4])
+        ]
+
+        self.provider_inputs = {}
+        for i, (key, label_text, value) in enumerate(fields):
+            lbl = label.create_label(label_text, "Archivo Medium", "medium_black", 14)
+            inp = QLineEdit()
+            inp.setStyleSheet(input_stylesheet)
+            inp.setPlaceholderText(label_text)
+            inp.setText(str(value))
+            self.provider_inputs[key] = inp
+            layout.addWidget(lbl, i, 0)
+            layout.addWidget(inp, i, 1)
+
+        # Botones
+        btn_save = button.create_button("Guardar", "accept", None, 16, (100, 40))
+        btn_cancel = button.create_button("Cancelar", "cancel", None, 16, (100, 40))
+        layout.addWidget(btn_save, len(fields), 0)
+        layout.addWidget(btn_cancel, len(fields), 1)
+
+        def save_provider():
+            data = {k: self.provider_inputs[k].text().strip() for k in self.provider_inputs}
+            if not all(data.values()):
+                q = msgbox.create_msg_box("warning", "Advertencia", "Todos los campos son obligatorios.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q.exec()
+                return
+
+            try:
+                # Si ya existe un proveedor, actualiza; si no, inserta
+                s.cur.execute("SELECT COUNT(*) FROM proveedor;")
+                exists = s.cur.fetchone()[0] > 0
+                if exists:
+                    s.cur.execute("""
+                    UPDATE proveedor SET nombre=?, nit=?, direccion=?, telefono=?, email=?
+                    """, (data["nombre"], data["nit"], data["direccion"], data["telefono"], data["email"]))
+                else:
+                    s.cur.execute("""
+                    INSERT INTO proveedor(nombre, nit, direccion, telefono, email)
+                    VALUES (?, ?, ?, ?, ?)
+                    """, (data["nombre"], data["nit"], data["direccion"], data["telefono"], data["email"]))
+                s.conn.commit()
+                q = msgbox.create_msg_box("information", "Éxito", "Información del proveedor guardada correctamente.", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q.exec()
+                self.provider_window.close()
+            except Exception as e:
+                print("Error al guardar la información del proveedor:", e)
+                q = msgbox.create_msg_box("critical", "Error", "No se pudo guardar la información.", QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q.exec()
+
+        btn_save.clicked.connect(save_provider)
+        btn_cancel.clicked.connect(self.provider_window.close)
+        self.provider_window.show()
+    
+    def show_provider_info(self):
+        label = LabelFactory()
+        msgbox = MsgBoxFactory()
+
+        # Obtener datos actuales del proveedor (si existen)
+        s.cur.execute("SELECT nombre, nit, direccion, telefono, email FROM proveedor LIMIT 1;")
+        proveedor = s.cur.fetchone()
+
+        if not proveedor:
+            q = msgbox.create_msg_box("information", "Información", "No hay información del proveedor registrada.",
+                QMessageBox.Information, "Archivo Medium", 12, "Aceptar",QMessageBox.AcceptRole)
+            q.exec()
+            return
+
+        info_text = (
+            f"<b>Nombre:</b> {proveedor[0]}<br>"
+            f"<b>NIT:</b> {proveedor[1]}<br>"
+            f"<b>Dirección:</b> {proveedor[2]}<br>"
+            f"<b>Teléfono:</b> {proveedor[3]}<br>"
+            f"<b>Email:</b> {proveedor[4]}"
+        )
+
+        q = msgbox.create_msg_box("information", "Información del Proveedor", info_text, QMessageBox.Information,
+            "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+        q.exec()

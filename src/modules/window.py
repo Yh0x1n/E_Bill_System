@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         self.sideTopLayout.setAlignment(Qt.AlignTop)
         self.sideLayout.addLayout(self.sideTopLayout)
 
-        self.sideMidTopLayout = QVBoxLayout()
+        self.sideMidTopLayout = QGridLayout()
         self.sideLayout.addLayout(self.sideMidTopLayout)
 
         self.sideMidLowLayout = QHBoxLayout()
@@ -150,20 +150,26 @@ class MainWindow(QMainWindow):
 
         self.btn_ventas = button.create_button("Tus últimas ventas", style="sales", font_size=14, min_size=(200, 0))
         self.btn_ventas.setFixedWidth(200)
-        self.sideMidTopLayout.addWidget(self.btn_ventas, 0, Qt.AlignLeft)
+        self.sideMidTopLayout.addWidget(self.btn_ventas, 0, 0, Qt.AlignLeft)
         self.btn_ventas.clicked.connect(self.display_ventas)
 
         self.btn_gestionar_facturas = button.create_button("Gestionar facturas", style = "sales", font_size=14, min_size=(200,0))
-        self.sideMidTopLayout.addWidget(self.btn_gestionar_facturas, 0, Qt.AlignLeft)
-        
+        self.sideMidTopLayout.addWidget(self.btn_gestionar_facturas, 1, 0, Qt.AlignLeft)
+        self.btn_gestionar_facturas.clicked.connect(self.toggle_invoices_mgmt_frame)
+
         self.btn_ayuda = button.create_button("Ayuda", style = "sales", font_size=14, min_size=(100,0))
         self.btn_ayuda.setFixedWidth(100)
-        self.sideMidTopLayout.addWidget(self.btn_ayuda, 0, Qt.AlignLeft)
+        self.sideMidTopLayout.addWidget(self.btn_ayuda, 2, 0, Qt.AlignLeft)
 
         self.btn_about = button.create_button("Acerca de", style = "sales", font_size=14, min_size=(130,0))
         self.btn_about.clicked.connect(self.about)
         self.btn_about.setFixedWidth(130)
-        self.sideMidTopLayout.addWidget(self.btn_about, 0, Qt.AlignLeft)
+        self.sideMidTopLayout.addWidget(self.btn_about, 3, 0, Qt.AlignLeft)
+
+        self.separador = QLabel(self.sideBar)
+        self.separador.setStyleSheet("background-color: transparent;")
+        self.separador.setFixedHeight(50)
+        self.sideMidTopLayout.addWidget(self.separador, 4, 0)
 
         # BOTONES DEL DASHBOARD
         self.btn_facturas = button.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
@@ -233,6 +239,28 @@ class MainWindow(QMainWindow):
         dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
         self.toggle_frame('invoiceFrame', Invoice, 'invoiceBackButton', self.toggle_create_invoices_frame, dashboard_elements)
         self.invoiceFrame.update_lists()
+
+    def toggle_invoices_mgmt_frame(self):
+        from invoices_mgmt import InvoiceMgmt
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+
+        # Ocultar cualquier otro frame activo antes de mostrar el de gestión de facturas
+        frames_attrs = ['clientsFrame', 'productsFrame', 'invoiceFrame']
+        for attr in frames_attrs:
+            if hasattr(self, attr):
+                frame = getattr(self, attr)
+                if frame.isVisible():
+                    frame.setVisible(False)
+        
+        # Ocultar también los botones de volver de otros frames si están visibles
+        back_buttons = ['clientBackButton', 'productBackButton', 'invoiceBackButton']
+        for btn_attr in back_buttons:
+            if hasattr(self, btn_attr):
+                btn = getattr(self, btn_attr)
+                if btn.isVisible():
+                   btn.setVisible(False)
+
+        self.toggle_frame('invoicesMgmtFrame', InvoiceMgmt, 'invoicesMgmtBackButton', self.toggle_invoices_mgmt_frame, dashboard_elements)
     
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
         self.sideBar.setFixedHeight(self.height())
@@ -295,7 +323,6 @@ class MainWindow(QMainWindow):
                 widget = self.sideMidTopLayout.itemAt(i).widget()
                 if widget and widget != self.btn_ventas:
                     widget.show()
-            self.btn_ventas.setFixedSize(200, 80)
 
         else:
             # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
@@ -311,7 +338,7 @@ class MainWindow(QMainWindow):
                 self.ventasLayout.setContentsMargins(0, 0, 0, 0)
                 self.ventasLayout.setAlignment(Qt.AlignCenter)
                 self.ventasLayout.setSpacing(50)
-                self.sideMidTopLayout.addWidget(self.ventasWidget, Qt.AlignCenter)
+                self.sideMidTopLayout.addWidget(self.ventasWidget, 1, 0, Qt.AlignCenter)
 
                 from service import s  # Importar el módulo de base de datos
                 facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas

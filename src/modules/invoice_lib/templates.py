@@ -112,7 +112,7 @@ class SimpleInvoice(SimpleDocTemplate):
 
     def _service_provider_data(self):
         if isinstance(self.service_provider_info, ServiceProviderInfo):
-            props = [('name', 'Nombre'), ('street', 'Calle/Av.'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
+            props = [('name', 'Nombre'), ('street', 'Dirección'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
                      ('country', 'País'), ('post_code', 'Código postal'), ('vat_tax_number', 'NIT'),
                      ('email', 'Correo electrónico'), ('phone_number', "Teléfono")]
 
@@ -131,7 +131,7 @@ class SimpleInvoice(SimpleDocTemplate):
         if not isinstance(self.client_info, ClientInfo):
             return []
 
-        props = [('name', 'Nombre'), ('street', 'Calle/Av.'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
+        props = [('name', 'Nombre'), ('street', 'Dirección'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
                  ('country', 'País'), ('post_code', 'Código postal'), ('email', 'Correo electrónico'), ('client_id', 'N° Cliente'),
                  ('vat_tax_number', 'NIT'), ('phone_number', "Teléfono")]
         return self._attribute_to_table_data(self.client_info, props)

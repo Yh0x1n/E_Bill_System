@@ -9,17 +9,19 @@ import sqlite3 as sql, os, sys
 class Service: # Clase que realiza la conexión a la DB
     def __init__(self):
         try:
-            db_path = os.path.abspath("src/database.db")
+            db_path = os.path.abspath("src/modules/db/database.db")
+
             if not os.path.exists(db_path):
-                print(f"La base de datos no se encontró en la ruta: {db_path}\nCreando la base de datos en la ruta especificada...")
-                self.conn = sql.connect(db_path)
-            else:
-                self.conn = sql.connect(db_path)
+                os.mkdir("src/modules/db")
+            
+            self.conn = sql.connect(db_path)
             self.cur = self.conn.cursor()
             print("Conexión a la base de datos establecida correctamente.")
+        
         except FileNotFoundError as fnf_error:
             print(fnf_error)
             raise
+
 
         except sql.Error as db_error:
             print(f"Error al conectar con la base de datos: {db_error}")
@@ -67,8 +69,17 @@ class Service: # Clase que realiza la conexión a la DB
                 total REAL NOT NULL,
                 FOREIGN KEY (id_cliente) REFERENCES cliente (id_cliente),
                 FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
-                FOREIGN KEY (emisor) REFERENCES usuario (id)
+                FOREIGN KEY (emisor) REFERENCES proveedor (nombre)
                 );""") #Tabla "facturas"
+
+            self.cur.execute("""
+                CREATE TABLE IF NOT EXISTS proveedor (
+                    nombre TEXT NOT NULL,
+                    nit TEXT NOT NULL,
+                    direccion TEXT NOT NULL,
+                    telefono TEXT NOT NULL,
+                    email TEXT NOT NULL
+                );""")
         
         except sql.Error as e:
             print("Error al crear las tablas: ", e)

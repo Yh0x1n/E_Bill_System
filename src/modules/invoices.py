@@ -1,5 +1,5 @@
 """Módulo de generación de facturas"""
-from PySide6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QSizePolicy, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout, QVBoxLayout, QSizePolicy, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from datetime import datetime, date
@@ -8,6 +8,7 @@ from products import Product
 from service import s
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
+from styles.msg_boxes import MsgBoxFactory
 import random, os, sys, pandas as pd
 from styles.lists import apply_table_style
 
@@ -34,7 +35,7 @@ class Invoice(QWidget):
         self.headerLayout.setContentsMargins(0, 0, 0, 0)
         self.headerLayout.setSpacing(0)
 
-        self.invoice_label = label.create_label("Factura", "Archivo Black", "bold_black", 32)
+        self.invoice_label = label.create_label("Facturas", "Archivo Black", "bold_black", 32)
         self.headerLayout.addWidget(self.invoice_label, 0, 0, 1, 3, Qt.AlignLeft | Qt.AlignTop)
 
         self.invoice_sublabel = label.create_label("Genera tus facturas fácil y rápido", "Archivo Black", "bold_black", 16)
@@ -313,62 +314,80 @@ class Invoice(QWidget):
         from invoice_lib.templates import SimpleInvoice
         from invoice_lib.models import ServiceProviderInfo, ClientInfo, InvoiceInfo, Item
 
+        msg = MsgBoxFactory()
         now = datetime.now()
 
-        # Obtener datos del cliente y los productos seleccionados
-        client_id = self.client_combobox.currentText().split(" - ")[0]
-        product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
-        query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
-        query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
+        q = msg.create_question_box("question", "Generar factura", "¿Desea generar la factura?", QMessageBox.Question,
+                                    "Archivo Medium", 12, ["Confirmar", "Cancelar"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
         
-        client_data = s.cur.execute(query).fetchone()
-        product_data = s.cur.execute(query2, product_ids).fetchall()
+        q.exec()
 
-        invoice_id = f"INV-{random.randint(100, 999)}"
-        invoice_datetime = now.strftime("%d/%m/%Y")
-        due_datetime = now.strftime("%d/%m/%Y")
+        if q.clickedButton().text() == "Confirmar":
+            try:
+                # Obtener datos del cliente y los productos seleccionados
+                client_id = self.client_combobox.currentText().split(" - ")[0]
+                product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
+                query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
+                query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
 
-        #Agregar la información del cliente y el proveedor de servicios
-        doc = SimpleInvoice(f"{invoice_id}.pdf")
-        doc.invoice_info = InvoiceInfo(invoice_id=invoice_id, invoice_datetime=invoice_datetime, due_datetime=due_datetime)
-        
-        for product in product_data:
-            # Obtener las unidades seleccionadas desde unit_label
-            row_index = next((i for i in range(self.product_table.rowCount()) if self.product_table.item(i, 0).text() == product[0]), None)
-            if row_index is not None:
-                counter_cell_widget = self.product_table.cellWidget(row_index, 3)
-                unit_label = counter_cell_widget.findChild(type(self.total_amount_label))
-                units = int(unit_label.text()) if unit_label else 1
-                doc.add_item(Item(product[1], product[3], units, float(product[2])))
-        
-        doc.client_info = ClientInfo(name=client_data[1], street=client_data[3], phone=client_data[4] , email=client_data[2], client_id=client_data[0], vat_tax_number=client_data[5])
-        
-        doc.service_provider_info = ServiceProviderInfo(name="Nombre del proveedor", street="Dirección del proveedor", city="Ciudad", state="Estado", vat_tax_number="Número de IVA", email="Email del proveedor", phone="Teléfono del proveedor")
+                client_data = s.cur.execute(query).fetchone()
+                product_data = s.cur.execute(query2, product_ids).fetchall()
 
-        tax = 5
-        doc.set_item_tax_rate(tax)
+                invoice_id = f"INV-{random.randint(100, 999)}"
+                invoice_datetime = now.strftime("%d/%m/%Y")
+                due_datetime = now.strftime("%d/%m/%Y")
 
-        doc.set_bottom_tip("Gracias por su compra!")
+                #Agregar la información del cliente y el proveedor de servicios
+                doc = SimpleInvoice(f"{invoice_id}.pdf")
+                doc.invoice_info = InvoiceInfo(invoice_id=invoice_id, invoice_datetime=invoice_datetime, due_datetime=due_datetime)
 
-        doc.finish()
+                for product in product_data:
+                    # Obtener las unidades seleccionadas desde unit_label
+                    row_index = next((i for i in range(self.product_table.rowCount()) if self.product_table.item(i, 0).text() == product[0]), None)
+                    if row_index is not None:
+                        counter_cell_widget = self.product_table.cellWidget(row_index, 3)
+                        unit_label = counter_cell_widget.findChild(type(self.total_amount_label))
+                        units = int(unit_label.text()) if unit_label else 1
+                        doc.add_item(Item(product[1], product[3], units, float(product[2])))
 
-        pdf_path = f"{invoice_id}.pdf"
-        subtotal = sum(float(product[2]) * unidades for product, unidades in zip(product_data, [int(self.product_table.cellWidget(i, 3).findChild(type(self.total_amount_label)).text()) for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]))
-        
-        total = subtotal * (1 + tax / 100)
+                doc.client_info = ClientInfo(name=client_data[1], street=client_data[3], phone=client_data[4] , email=client_data[2], client_id=client_data[0], vat_tax_number=client_data[5])
 
-        self.save_invoice(
-            invoice_id=invoice_id,
-            fecha_emision=invoice_datetime,
-            id_cliente=client_data[0],
-            id_producto=",".join(product_ids),  # O ajusta según tu modelo
-            pdf_path=pdf_path,
-            emisor="ID_DEL_EMISOR",  # Ajusta según tu lógica de usuario
-            subtotal=subtotal,
-            iva=tax,
-            total=total
-        )
-    
+                doc.service_provider_info = ServiceProviderInfo(name="Nombre del proveedor", street="Dirección del proveedor", city="Ciudad", state="Estado", vat_tax_number="Número de IVA", email="Email del proveedor", phone="Teléfono del proveedor")
+
+                tax = 5
+                doc.set_item_tax_rate(tax)
+
+                doc.set_bottom_tip("Gracias por su compra!")
+
+                doc.finish()
+
+                pdf_path = f"{invoice_id}.pdf"
+                subtotal = sum(float(product[2]) * unidades for product, unidades in zip(product_data, [int(self.product_table.cellWidget(i, 3).findChild(type(self.total_amount_label)).text()) for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]))
+
+                total = subtotal * (1 + tax / 100)
+
+                self.save_invoice(
+                    invoice_id=invoice_id,
+                    fecha_emision=invoice_datetime,
+                    id_cliente=client_data[0],
+                    id_producto=",".join(product_ids),  # O ajusta según tu modelo
+                    pdf_path=pdf_path,
+                    emisor="ID_DEL_EMISOR",  # Ajusta según tu lógica de usuario
+                    subtotal=subtotal,
+                    iva=tax,
+                    total=total
+                )
+                r = msg.create_msg_box("information", "Información", "Factura creada correctamente",
+                                    QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                r.exec()
+            
+            except Exception as e:
+                error_msg = f"Error al generar la factura: {str(e)}"
+                r = msg.create_msg_box("error", "Error", error_msg, QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                r.exec()
+        else:
+            pass
+
     def save_invoice(self, invoice_id, fecha_emision, id_cliente, id_producto, pdf_path, emisor, subtotal, iva, total):
         # Lee el PDF como binario
         with open(pdf_path, "rb") as f:
