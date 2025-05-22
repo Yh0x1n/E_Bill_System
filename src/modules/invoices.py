@@ -1,5 +1,5 @@
 """Módulo de generación de facturas"""
-from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout, QVBoxLayout, QSizePolicy, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QMessageBox, QGridLayout, QVBoxLayout, QSizePolicy, QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, QCheckBox, QHBoxLayout, QFileDialog
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from datetime import datetime, date
@@ -61,9 +61,11 @@ class Invoice(QWidget):
         self.btn_update_lists.clicked.connect(self.update_lists)
         self.fieldsLayout.addWidget(self.btn_update_lists, 1, 3, Qt.AlignLeft)
 
-        self.btn_generate_invoice = button.create_button("Generar", "accept", None, 12, (100, 35))
+        self.btn_generate_invoice = button.create_button("Generar", "accept", None, 12, (100, 30))
+        self.btn_generate_invoice.setStyleSheet(self.btn_generate_invoice.styleSheet() + """QPushButton {border: none; border-radius: 5px;}""")
+        self.btn_generate_invoice.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.btn_generate_invoice.clicked.connect(self.generate_invoice)
-        self.fieldsLayout.addWidget(self.btn_generate_invoice, 5, 1, 1, 4, Qt.AlignRight)
+        self.fieldsLayout.addWidget(self.btn_generate_invoice, 6, 1, 1, 4, Qt.AlignRight)
 
         descriptions = ["Agregar cliente", "Agregar producto", "Actualizar listas"]
         buttons = [self.btn_add_client, self.btn_add_product, self.btn_update_lists]
@@ -74,18 +76,18 @@ class Invoice(QWidget):
     def initFields(self):
         from service import s
         label = LabelFactory()
-
         self.fieldsLayout = QGridLayout()
         self.fieldsLayout.setContentsMargins(0, 0, 0, 0)
         self.fieldsLayout.setSpacing(10)
 
-        #Combobox de cliente
+        # Combobox de cliente
         self.client_combobox = QComboBox()
-        self.client_combobox.setPlaceholderText("Seleccione un cliente")  # Texto placeholder
+        self.client_combobox.setPlaceholderText("Seleccione un cliente")
+        clients = s.get_client_by_id()
 
-        clients = s.get_client_by_id()  # Obtener lista de clientes desde la base de datos
         for client in clients:
-            self.client_combobox.addItem(f"{client[0]} - {client[1]}")  # Mostrar ID y nombre en el desplegable
+            self.client_combobox.addItem(f"{client[0]} - {client[1]}")
+        
         self.client_combobox.setStyleSheet("""
             QComboBox {
                 border: 1px solid #ccc;
@@ -110,15 +112,23 @@ class Invoice(QWidget):
             }
         """)
 
-        #Agregar labels que al seleccionar un cliente de la ComboBox se muestren los datos extrayéndolos directamente de la base de datos
+        # Checkbox para marcar la factura como pagada
+        self.paid_checkbox = QCheckBox("Marcar como pagado")
+        self.paid_checkbox.setStyleSheet("""
+                                        QCheckBox {
+                                            font-size: 12px;
+                                            padding: 5px;
+                                            font-family: 'Archivo Medium';
+                                        }""")
+        
+        self.fieldsLayout.addWidget(self.paid_checkbox, 5, 1, 1, 4, Qt.AlignRight)
+
         # Labels para mostrar datos del cliente seleccionado
         self.client_info_label = label.create_label("Información del Cliente", "Archivo Medium", "medium_black", 12)
         self.fieldsLayout.addWidget(self.client_info_label, 2, 0, Qt.AlignLeft)
-
         self.client_details_label = label.create_label("", "Archivo Medium", "medium_black", 12)
-        self.fieldsLayout.addWidget(self.client_details_label, 3, 0, Qt.AlignLeft)
+        self.fieldsLayout.addWidget(self.client_details_label, 3, 0, 2, Qt.AlignLeft)
 
-        # Conectar la selección de la combobox con la actualización de los labels
         def update_client_details(index):
             if index >= 0:
                 client_id = self.client_combobox.currentText().split(" - ")[0]
@@ -126,11 +136,8 @@ class Invoice(QWidget):
                 client_data = s.cur.execute(query).fetchone()
                 self.client_details_label.setText(f"ID: {client_data[0]}        Nombre: {client_data[1]}"
                                                   f"\nEmail: {client_data[2]}")
-
         self.client_combobox.currentIndexChanged.connect(update_client_details)
-
         self.fieldsLayout.addWidget(self.client_combobox, 1, 0, Qt.AlignLeft)
-
         self.invoiceLayout.addLayout(self.fieldsLayout)
     
     def initList(self):
@@ -316,12 +323,9 @@ class Invoice(QWidget):
 
         msg = MsgBoxFactory()
         now = datetime.now()
-
         q = msg.create_question_box("question", "Generar factura", "¿Desea generar la factura?", QMessageBox.Question,
                                     "Archivo Medium", 12, ["Confirmar", "Cancelar"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
-        
         q.exec()
-
         if q.clickedButton().text() == "Confirmar":
             try:
                 # Obtener datos del cliente y los productos seleccionados
@@ -329,9 +333,11 @@ class Invoice(QWidget):
                 product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
                 query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
                 query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
+                query3 = f"SELECT nombre, nit, direccion, telefono, email from proveedor;"
 
                 client_data = s.cur.execute(query).fetchone()
                 product_data = s.cur.execute(query2, product_ids).fetchall()
+                service_provider_data = s.cur.execute(query3).fetchone()
 
                 invoice_id = f"INV-{random.randint(100, 999)}"
                 invoice_datetime = now.strftime("%d/%m/%Y")
@@ -350,18 +356,39 @@ class Invoice(QWidget):
                         units = int(unit_label.text()) if unit_label else 1
                         doc.add_item(Item(product[1], product[3], units, float(product[2])))
 
-                doc.client_info = ClientInfo(name=client_data[1], street=client_data[3], phone=client_data[4] , email=client_data[2], client_id=client_data[0], vat_tax_number=client_data[5])
+                doc.client_info = ClientInfo(client_id=client_data[0], name=client_data[1], vat_tax_number=client_data[5], street=client_data[3], phone=client_data[4] , email=client_data[2])
 
-                doc.service_provider_info = ServiceProviderInfo(name="Nombre del proveedor", street="Dirección del proveedor", city="Ciudad", state="Estado", vat_tax_number="Número de IVA", email="Email del proveedor", phone="Teléfono del proveedor")
+
+                doc.service_provider_info = ServiceProviderInfo(name=service_provider_data[0], vat_tax_number=service_provider_data[1], street=service_provider_data[2], phone=service_provider_data[3], email=service_provider_data[4])
 
                 tax = 5
                 doc.set_item_tax_rate(tax)
 
                 doc.set_bottom_tip("Gracias por su compra!")
 
+                # Evaluar si la factura está pagada
+                doc.is_paid = self.paid_checkbox.isChecked()
+                
+                # Abrir un diálogo para seleccionar la carpeta de guardado
+                default_filename = f"{invoice_id}.pdf"
+                save_path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "Seleccionar carpeta para guardar la factura",
+                    os.path.join(os.path.expanduser("~"), default_filename),
+                    "PDF files (*.pdf)"
+                )
+                save_dir = os.path.dirname(save_path) if save_path else ""
+                if save_path and not save_path.lower().endswith(".pdf"):
+                    save_path += ".pdf"
+
+                if not save_dir:
+                    return  # El usuario canceló, no generar la factura
+
+                pdf_path = os.path.join(save_dir, f"{invoice_id}.pdf")
+                
+                doc.filename = pdf_path  # Asegura que el PDF se guarde en la ruta seleccionada
                 doc.finish()
 
-                pdf_path = f"{invoice_id}.pdf"
                 subtotal = sum(float(product[2]) * unidades for product, unidades in zip(product_data, [int(self.product_table.cellWidget(i, 3).findChild(type(self.total_amount_label)).text()) for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]))
 
                 total = subtotal * (1 + tax / 100)
@@ -370,7 +397,7 @@ class Invoice(QWidget):
                     invoice_id=invoice_id,
                     fecha_emision=invoice_datetime,
                     id_cliente=client_data[0],
-                    id_producto=",".join(product_ids),  # O ajusta según tu modelo
+                    id_producto=",".join(product_ids),
                     pdf_path=pdf_path,
                     emisor="ID_DEL_EMISOR",  # Ajusta según tu lógica de usuario
                     subtotal=subtotal,

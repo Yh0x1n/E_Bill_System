@@ -62,7 +62,24 @@ class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
                             QMessageBox QPushButton:hover {
                                 background-color: darkblue;
                             }
-                            """
+                            """,
+                    "error" : """
+                            QMessageBox {
+                                background-color:white;
+                            }
+                            QMessageBox QLabel {
+                                color: black;
+                                font-size: 14px;
+                            }
+                            QMessageBox QPushButton {
+                                background-color: blue;
+                                color: white;
+                                border-radius: 5px;
+                                padding: 5px;
+                            }
+                            QMessageBox QPushButton:hover {
+                                background-color: darkblue;
+                            }"""
                     }
     
     def create_msg_box(self, style, title, text, icon, font, font_size, button, button_role = None):

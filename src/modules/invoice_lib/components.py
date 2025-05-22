@@ -45,14 +45,17 @@ class PaidStamp(object):
         self.y = y
 
     def __call__(self, canvas, doc):
-        # "PAID"
+        # "PAGADO"
         canvas.saveState()
-        canvas.setFontSize(50)
+        canvas.setFontSize(28)  # Tamaño de fuente más pequeño
         canvas.setFillColor(colors.red)
         canvas.setStrokeColor(colors.red)
         canvas.rotate(45)
         canvas.drawString(self.x, self.y, 'PAGADO')
-        canvas.setLineWidth(4)
+        canvas.setLineWidth(3)
         canvas.setLineJoin(1)  # Round join
-        canvas.rect(self.x - .25 * inch, self.y - .25 * inch, width=2*inch, height=inch)
+        # Ajuste del tamaño del rectángulo para que sea más uniforme con el texto
+        rect_width = 1.9 * inch
+        rect_height = 0.7 * inch
+        canvas.rect(self.x - 0.15 * inch, self.y - 0.25 * inch, width=rect_width, height=rect_height)
         canvas.restoreState()
