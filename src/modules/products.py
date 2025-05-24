@@ -436,3 +436,8 @@ class Product(QWidget):
 
     def export(self):
         Export().export_data("products")
+    
+    def open_settings(self):
+        from settings import SettingsWindow
+        self.settings = SettingsWindow()
+        self.settings.show()

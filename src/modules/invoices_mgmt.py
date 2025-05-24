@@ -39,6 +39,8 @@ class InvoiceMgmt(QWidget):
         self.invoiceLayout.addLayout(self.buttonLayout)
 
         self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size=(75, 75))
+        self.btn_settings.setToolTip("Ajustes")
+        self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
         self.btn_delete = button.create_button("", "default_black", "src/assets/icons/Trash.png", min_size=(75, 75))
@@ -159,3 +161,8 @@ class InvoiceMgmt(QWidget):
 
     def export(self):
         Export().export_data("invoices")
+    
+    def open_settings(self):
+        from settings import SettingsWindow
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()

@@ -3,12 +3,15 @@ Módulo de la ventana principal de la aplicación
 '''
 from PySide6.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QMainWindow, QMessageBox, QFrame, QSizePolicy, QGridLayout, QLayout
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont
-import os, sys
+from PySide6.QtGui import QIcon, QPixmap, QPainter, QBrush, QFont, QColor
+from PySide6.QtCharts import QChart, QChartView, QBarSeries, QBarSet, QBarCategoryAxis, QValueAxis
+from PySide6.QtCharts import QPieSeries, QPieSlice
+from service import s
 from datetime import datetime
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
+import os, sys
 
 class MainWindow(QMainWindow):
     def __init__(self, username, email):
@@ -72,11 +75,10 @@ class MainWindow(QMainWindow):
         self.dashboardHeader.setAlignment(Qt.AlignTop)
         self.dashboardLayout.addLayout(self.dashboardHeader)
         
-        self.dashboardMidLayout = QVBoxLayout()
-        self.dashboardMidLayout.setAlignment(Qt.AlignRight | Qt.AlignLeft)
+        self.dashboardMidLayout = QGridLayout()
         self.dashboardLayout.addLayout(self.dashboardMidLayout)
 
-        self.dashboardBottomLayout = QVBoxLayout()
+        self.dashboardBottomLayout = QGridLayout()
         self.dashboardBottomLayout.setAlignment(Qt.AlignBottom)
         self.dashboardLayout.addLayout(self.dashboardBottomLayout)
 
@@ -127,18 +129,67 @@ class MainWindow(QMainWindow):
 
         # Etiqueta "Total de ventas"
         self.total_label = label.create_label("Total de ventas", font="Archivo Medium", style="medium_black", font_size=16)
-        self.dashboardMidLayout.addWidget(self.total_label, Qt.AlignRight | Qt.AlignBottom)
+        self.dashboardMidLayout.addWidget(self.total_label, 1, 1, Qt.AlignRight)
 
         self.money = label.create_label("$0.00", font="Archivo Medium", style="money", font_size=24)
-        self.dashboardMidLayout.addWidget(self.money, Qt.AlignRight | Qt.AlignBottom)
-    
+        self.dashboardMidLayout.addWidget(self.money, 2, 1, Qt.AlignRight | Qt.AlignBottom)
+
+        # Gráfico de resumen de clientes, productos y facturas
+        def get_dashboard_counts():
+            return (
+            s.cur.execute("SELECT COUNT(*) FROM cliente").fetchone()[0],
+            s.cur.execute("SELECT COUNT(*) FROM producto").fetchone()[0],
+            s.cur.execute("SELECT COUNT(*) FROM facturas").fetchone()[0]
+            )
+
+        def set_pie_series(series, counts):
+            labels = ["Clientes registrados", "Productos registrados", "Facturas generadas"]
+            colors = [QColor("#009345"), QColor("#E50202"), QColor("#3302E5")]
+            series.clear()
+            for i, (label, count) in enumerate(zip(labels, counts)):
+                slice = series.append(label, count)
+                max_value = max(counts)
+            
+            for i, slice in enumerate(series.slices()):
+                slice.setBrush(colors[i % len(colors)])
+            
+            if slice.value() == max_value and max_value > 0:
+                slice.setExploded(True)
+                slice.setLabelVisible(False)
+                slice.setPen(QColor(Qt.black))
+            else:
+                slice.setLabelVisible(False)
+
+        clientes_count, productos_count, facturas_count = get_dashboard_counts()
+        
+        self.series = QPieSeries()
+        set_pie_series(self.series, (clientes_count, productos_count, facturas_count))
+
+        self.chart = QChart()
+        self.chart.addSeries(self.series)
+        self.chart.legend().setAlignment(Qt.AlignRight)
+
+        self.chart_view = QChartView(self.chart)
+        self.chart_view.setRenderHint(QPainter.Antialiasing)
+        self.chart_view.setFixedSize(475, 175)
+        self.dashboardMidLayout.addWidget(self.chart_view, 0, 0, Qt.AlignLeft)
+
+        def update_dashboard_chart(self):
+            counts = get_dashboard_counts()
+            set_pie_series(self.series, counts)
+
+        self.update_dashboard_chart = update_dashboard_chart.__get__(self)
+
+        # Llamar a update_dashboard_chart al mostrar/ocultar frames relevantes
+        self.update_dashboard_chart()
+
     def createButtons(self):
         button = ButtonFactory()
 
         # Widget para contener el layout de botones
         self.buttonWidget = QWidget()
         self.buttonLayout = QGridLayout(self.buttonWidget)
-        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
+        self.buttonLayout.setContentsMargins(2, 2, 2, 2)
         self.buttonLayout.setSpacing(10)
         self.buttonLayout.setAlignment(Qt.AlignBottom | Qt.AlignRight)
         self.dashboardBottomLayout.addWidget(self.buttonWidget)  # Añadir el widget de botones en la fila 2, ocupando 2 columnas
@@ -202,11 +253,24 @@ class MainWindow(QMainWindow):
 
         if not hasattr(self, back_button_attr):
             button = ButtonFactory()
-            back_button = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (100, 50), Qt.AlignLeft)
+            back_button = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (90, 45), Qt.AlignLeft)
             back_button.clicked.connect(toggle_method)
             back_button.setShortcut("Esc")
             setattr(self, back_button_attr, back_button)
-            self.dashboardMidLayout.addWidget(back_button, 0, Qt.AlignBottom | Qt.AlignLeft)
+            
+            # Crear un layout aparte para el botón de volver, debajo del frame correspondiente
+            frame_instance = getattr(self, frame_attr)
+            self.backButtonLayout = QGridLayout()
+            self.backButtonLayout.setAlignment(Qt.AlignBottom | Qt.AlignLeft)
+            self.backButtonLayout.addWidget(back_button, 0, 0, Qt.AlignLeft)
+            
+            # Crear un widget contenedor para el layout del botón de volver
+            self.backButtonWidget = QWidget()
+            self.backButtonWidget.setLayout(self.backButtonLayout)
+            
+            # Agregar el widget del botón de volver al layout principal del frame (asumiendo que el frame tiene un layout principal)
+            if hasattr(frame_instance, 'layout'):
+                frame_instance.layout().addWidget(self.backButtonWidget)
 
         frame = getattr(self, frame_attr)
         back_button = getattr(self, back_button_attr)
@@ -217,32 +281,36 @@ class MainWindow(QMainWindow):
             back_button.setVisible(False)
             for element in dashboard_elements:
                 element.setVisible(True)
+            # Actualizar el chart al volver al dashboard
+            self.update_dashboard_chart()
         else:
             # Mostrar el frame y ocultar los elementos originales del dashboard
             frame.setVisible(True)
             back_button.setVisible(True)
             for element in dashboard_elements:
                 element.setVisible(False)
+            # Actualizar el chart al mostrar el frame
+            self.update_dashboard_chart()
 
     def toggle_client_frame(self):
         from clients import Client
-        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget, self.chart_view, self.chart, self.series]
         self.toggle_frame('clientsFrame', Client, 'clientBackButton', self.toggle_client_frame, dashboard_elements)
 
     def toggle_products_frame(self):
         from products import Product
-        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget, self.chart_view, self.chart, self.series]
         self.toggle_frame('productsFrame', Product, 'productBackButton', self.toggle_products_frame, dashboard_elements)
 
     def toggle_create_invoices_frame(self):
         from invoices import Invoice
-        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget, self.chart_view, self.chart, self.series]
         self.toggle_frame('invoiceFrame', Invoice, 'invoiceBackButton', self.toggle_create_invoices_frame, dashboard_elements)
         self.invoiceFrame.update_lists()
 
     def toggle_invoices_mgmt_frame(self):
         from invoices_mgmt import InvoiceMgmt
-        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget]
+        dashboard_elements = [self.total_label, self.money, self.menu_label, self.res_label, self.btn_settings, self.buttonWidget, self.chart_view, self.chart, self.series]
 
         # Ocultar cualquier otro frame activo antes de mostrar el de gestión de facturas
         frames_attrs = ['clientsFrame', 'productsFrame', 'invoiceFrame']
@@ -340,7 +408,6 @@ class MainWindow(QMainWindow):
                 self.ventasLayout.setSpacing(50)
                 self.sideMidTopLayout.addWidget(self.ventasWidget, 1, 0, Qt.AlignCenter)
 
-                from service import s  # Importar el módulo de base de datos
                 facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
 
                 # Mostrar las facturas en etiquetas

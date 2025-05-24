@@ -2,6 +2,8 @@
 Módulo con un widget de ventana para configurar el tema, gestionar los usuarios y la información del proveedor
 """
 
+#TO-DO: ARREGLAR LOS ESTILOS Y ALINEACIÓN DE LOS BOTONES
+
 #Importaciones
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QLineEdit, QComboBox, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QMainWindow, QMessageBox
 from PySide6.QtGui import QFont
@@ -24,7 +26,7 @@ class SettingsWindow(QWidget):
         :param main_window_instance: Instancia de la ventana principal (MainWindow).
         """
         super().__init__()
-        self.setWindowTitle("Configuración")
+        self.setWindowTitle("Ajustes")
         self.setGeometry(100, 100, 300, 200)
 
         self.settings_layout = QGridLayout()
@@ -33,38 +35,40 @@ class SettingsWindow(QWidget):
         self.init_user_list()
 
     def initUI(self):
+        label = LabelFactory()
+        button = ButtonFactory()
 
-        # Combobox para colocar el tema
-        self.provider_label = QLabel("Información del proveedor")
-        self.settings_layout.addWidget(self.provider_label, 0, 0)  # Fila 0, columna 0-1
+        # Label de información del proveedor
+        self.provider_label = label.create_label("Información del proveedor", "Archivo Medium", "medium_black", 14)
+        self.settings_layout.addWidget(self.provider_label, 0, 0)
 
-        # Botón para aplicar cambios de tema
-        self.show_provider_info_button = QPushButton("Mostrar")
+        # Botón para mostrar información del proveedor
+        self.show_provider_info_button = button.create_button("Mostrar", "default_black", None, 12, (100, 40))
         self.show_provider_info_button.clicked.connect(self.show_provider_info)
-        self.settings_layout.addWidget(self.show_provider_info_button, 0, 1)  # Fila 0, columna 2
+        self.settings_layout.addWidget(self.show_provider_info_button, 0, 1)
 
-        #Botón para editar la información del proveedor
-        self.edit_provider_info_button = QPushButton("Editar")
+        # Botón para editar la información del proveedor
+        self.edit_provider_info_button = button.create_button("Editar", "default_black", None, 12, (100, 40))
         self.edit_provider_info_button.clicked.connect(self.set_provider_info)
-        self.settings_layout.addWidget(self.edit_provider_info_button, 0, 2) # Fila 0, columna 3
+        self.settings_layout.addWidget(self.edit_provider_info_button, 0, 2)
 
         # Gestión de usuarios
-        self.user_label = QLabel("Gestión de Usuarios:")
-        self.settings_layout.addWidget(self.user_label, 1, 0, 1, 3)  # Fila 1, columna 0-2
+        self.user_label = label.create_label("Gestión de Usuarios:", "Archivo Medium", "medium_black", 14)
+        self.settings_layout.addWidget(self.user_label, 1, 0, 1, 3)
 
-        # Botón para editar el  usuario
-        self.edit_user_button = QPushButton("Editar Usuario")
+        # Botón para editar el usuario
+        self.edit_user_button = button.create_button("Editar Usuario", "accept", None, 12, (120, 40))
         self.edit_user_button.clicked.connect(self.edit_user)
-        self.settings_layout.addWidget(self.edit_user_button, 2, 0)  # Fila 2, columna 0
+        self.settings_layout.addWidget(self.edit_user_button, 2, 0)
 
-        #Botón para eliminar el usuario
-        self.edit_user_button = QPushButton("Eliminar Usuario")
-        self.edit_user_button.clicked.connect(self.delete_user)
-        self.settings_layout.addWidget(self.edit_user_button, 2, 1)  # Fila 2, columna 2
+        # Botón para eliminar el usuario
+        self.delete_user_button = button.create_button("Eliminar Usuario", "cancel", None, 12, (120, 40))
+        self.delete_user_button.clicked.connect(self.delete_user)
+        self.settings_layout.addWidget(self.delete_user_button, 2, 1)
 
-        # Información del proveedor
-        self.provider_info_label = QLabel("Información de usuarios:")
-        self.settings_layout.addWidget(self.provider_info_label, 3, 0, 1, 3)  # Fila 3, columna 0-2
+        # Información de usuarios
+        self.provider_info_label = label.create_label("Información de usuarios:", "Archivo Medium", "medium_black", 14)
+        self.settings_layout.addWidget(self.provider_info_label, 3, 0, 1, 3)
 
     def init_user_list(self):
         # Método que inicializa la lista de los usuarios registrados en la DB
@@ -86,7 +90,8 @@ class SettingsWindow(QWidget):
 
         self.settings_layout.addWidget(self.user_table, 4, 0, 1, 3)  # Fila 4, columna 0-2
 
-        self.btn_salir = QPushButton("Salir")
+        button = ButtonFactory()
+        self.btn_salir = button.create_button("Salir", "exit", None, 10, (75, 35))
         self.btn_salir.clicked.connect(self.close)
         self.settings_layout.addWidget(self.btn_salir, 5, 2, 1, 3)
 
@@ -327,19 +332,37 @@ class SettingsWindow(QWidget):
         proveedor = s.cur.fetchone()
 
         if not proveedor:
-            q = msgbox.create_msg_box("information", "Información", "No hay información del proveedor registrada.",
-                QMessageBox.Information, "Archivo Medium", 12, "Aceptar",QMessageBox.AcceptRole)
+            q = msgbox.create_msg_box(
+                "information",
+                "Información",
+                "No hay información del proveedor registrada.",
+                QMessageBox.Information,
+                "Archivo Medium",
+                12,
+                "Aceptar",
+                QMessageBox.AcceptRole
+            )
             q.exec()
             return
 
-        info_text = (
-            f"<b>Nombre:</b> {proveedor[0]}<br>"
-            f"<b>NIT:</b> {proveedor[1]}<br>"
-            f"<b>Dirección:</b> {proveedor[2]}<br>"
-            f"<b>Teléfono:</b> {proveedor[3]}<br>"
-            f"<b>Email:</b> {proveedor[4]}"
-        )
+        # Usar LabelFactory para el título y los campos
+        info_labels = [
+            label.create_label(f"Nombre: {proveedor[0]}", "Archivo Medium", "medium_black", 12),
+            label.create_label(f"NIT: {proveedor[1]}", "Archivo Medium", "medium_black", 12),
+            label.create_label(f"Dirección: {proveedor[2]}", "Archivo Medium", "medium_black", 12),
+            label.create_label(f"Teléfono: {proveedor[3]}", "Archivo Medium", "medium_black", 12),
+            label.create_label(f"Email: {proveedor[4]}", "Archivo Medium", "medium_black", 12)
+        ]
+        info_text = "<br>".join([lbl.text() for lbl in info_labels])
 
-        q = msgbox.create_msg_box("information", "Información del Proveedor", info_text, QMessageBox.Information,
-            "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+        q = msgbox.create_msg_box(
+            "information",
+            "Información del Proveedor",
+            info_text,
+            QMessageBox.Information,
+            "Archivo Medium",
+            12,
+            "Aceptar",
+            QMessageBox.AcceptRole
+        )
         q.exec()

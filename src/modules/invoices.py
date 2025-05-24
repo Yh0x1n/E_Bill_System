@@ -47,6 +47,8 @@ class Invoice(QWidget):
         button = ButtonFactory()
 
         self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
+        self.btn_settings.setToolTip("Ajustes")
+        self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, Qt.AlignTop | Qt.AlignRight)
 
         self.btn_add_client = button.create_button("", "default_black", "src/assets/icons/add_client.png", min_size=(75, 75))
@@ -331,6 +333,7 @@ class Invoice(QWidget):
                 # Obtener datos del cliente y los productos seleccionados
                 client_id = self.client_combobox.currentText().split(" - ")[0]
                 product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
+                
                 query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
                 query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
                 query3 = f"SELECT nombre, nit, direccion, telefono, email from proveedor;"
@@ -357,13 +360,9 @@ class Invoice(QWidget):
                         doc.add_item(Item(product[1], product[3], units, float(product[2])))
 
                 doc.client_info = ClientInfo(client_id=client_data[0], name=client_data[1], vat_tax_number=client_data[5], street=client_data[3], phone=client_data[4] , email=client_data[2])
-
-
                 doc.service_provider_info = ServiceProviderInfo(name=service_provider_data[0], vat_tax_number=service_provider_data[1], street=service_provider_data[2], phone=service_provider_data[3], email=service_provider_data[4])
-
                 tax = 5
                 doc.set_item_tax_rate(tax)
-
                 doc.set_bottom_tip("Gracias por su compra!")
 
                 # Evaluar si la factura está pagada
@@ -378,6 +377,7 @@ class Invoice(QWidget):
                     "PDF files (*.pdf)"
                 )
                 save_dir = os.path.dirname(save_path) if save_path else ""
+                
                 if save_path and not save_path.lower().endswith(".pdf"):
                     save_path += ".pdf"
 
@@ -412,6 +412,7 @@ class Invoice(QWidget):
                 error_msg = f"Error al generar la factura: {str(e)}"
                 r = msg.create_msg_box("error", "Error", error_msg, QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                 r.exec()
+
         else:
             pass
 
@@ -419,15 +420,14 @@ class Invoice(QWidget):
         # Lee el PDF como binario
         with open(pdf_path, "rb") as f:
             pdf_blob = f.read()
+
         # Guarda en la base de datos usando el método del servicio
         s.insert_invoice(
-            id_factura=invoice_id,
-            fecha_emision=fecha_emision,
-            id_cliente=id_cliente,
-            id_producto=id_producto,
-            comprobante=pdf_blob,
-            emisor=emisor,
-            subtotal=subtotal,
-            iva=iva,
-            total=total
+            id_factura=invoice_id, fecha_emision=fecha_emision, id_cliente=id_cliente, id_producto=id_producto,
+            comprobante=pdf_blob, emisor=emisor, subtotal=subtotal, iva=iva,total=total
         )
+
+    def open_settings(self):
+        from settings import SettingsWindow
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()

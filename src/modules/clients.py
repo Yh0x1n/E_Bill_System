@@ -427,3 +427,8 @@ class Client(QWidget):
     
     def export(self):
         Export().export_data("clients")
+
+    def open_settings(self):
+        from settings import SettingsWindow
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()

@@ -109,7 +109,7 @@ class ButtonFactory(QPushButton, QLabel):
                         }"""
         }
 
-    def create_button(self, text, style="default", icon_path=None, font_size=16, min_size=(295, 150), icon_position = Qt.AlignCenter):
+    def create_button(self, text, style="default", icon_path=None, font_size=14, min_size=(295, 120), icon_position = Qt.AlignCenter):
         button = QPushButton(text)
         button.setFont(QFont("Archivo Black", font_size))
         button.setStyleSheet(self.button_styles[style])
@@ -118,7 +118,7 @@ class ButtonFactory(QPushButton, QLabel):
 
         if icon_path:
             icon_label = QLabel(button)
-            icon_label.setPixmap(QIcon(icon_path).pixmap(75, 75))
+            icon_label.setPixmap(QIcon(icon_path).pixmap(50, 50))
             icon_label.setStyleSheet("background: transparent;")
             button.setLayout(QHBoxLayout())
             button.layout().addWidget(icon_label, 0, icon_position)
