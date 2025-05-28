@@ -399,7 +399,7 @@ class Invoice(QWidget):
                     id_cliente=client_data[0],
                     id_producto=",".join(product_ids),
                     pdf_path=pdf_path,
-                    emisor="ID_DEL_EMISOR",  # Ajusta según tu lógica de usuario
+                    emisor=service_provider_data[0],
                     subtotal=subtotal,
                     iva=tax,
                     total=total

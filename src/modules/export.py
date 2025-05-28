@@ -3,8 +3,9 @@
 import pandas as pd
 from datetime import datetime
 from service import s
-from PySide6.QtWidgets import QFileDialog, QMessageBox
+from PySide6.QtWidgets import QFileDialog, QMessageBox, QWidget
 from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 import os
 
 class Export:
@@ -16,8 +17,15 @@ class Export:
         # Configura el filtro de archivo solo para Excel
         file_filter = 'Excel Files (*.xlsx)'
 
-        # Muestra un cuadro de diálogo para elegir la ubicación
-        file_path = QFileDialog.getSaveFileName(None, 'Exportar', '', file_filter)
+        # Crear una ventana padre temporal con el ícono
+        parent = QWidget()
+        parent.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        parent.setWindowTitle("Exportar")
+        parent.setAttribute(Qt.WA_DeleteOnClose)
+        parent.hide()  # No mostrar la ventana, solo usarla como parent
+
+        # Abre el diálogo para guardar el archivo
+        file_path = QFileDialog.getSaveFileName(parent, 'Exportar', '', file_filter)
 
         try:
             if file_path[0]:  # Verifica si se seleccionó un archivo
@@ -32,7 +40,7 @@ class Export:
                     raise ValueError("Caller no reconocido")
 
                 # Ejecuta la consulta y obtiene los datos
-                df = pd.read_sql(query, s.conn)  # Ensure 's.engine' is a valid SQLAlchemy engine
+                df = pd.read_sql(query, s.conn)
                 filename, ext = os.path.splitext(file_path[0])
                 if not ext:
                     ext = '.xlsx'  # Por defecto, siempre exportar como Excel
@@ -40,13 +48,15 @@ class Export:
                 # Verifica si el archivo ya existe
                 if os.path.exists(filename + ext):
                     # Si el archivo existe, pregunta si se desea sobrescribir
-                    overwrite = QMessageBox.question(None, "Archivo existente",
-                                                     f"El archivo {filename + ext} ya existe. ¿Desea sobrescribirlo?",
-                                                     QMessageBox.Yes | QMessageBox.No)
+                    overwrite = QMessageBox.question(
+                        parent,
+                        "Archivo existente",
+                        f"El archivo {filename + ext} ya existe. ¿Desea sobrescribirlo?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
 
                     if overwrite == QMessageBox.No:
                         return
-                    
                     elif overwrite == QMessageBox.Yes:
                         # Si se elige sobrescribir, elimina el archivo existente
                         os.remove(filename + ext)
@@ -57,9 +67,7 @@ class Export:
                 # Mensaje de confirmación
                 self.msg.setIcon(QMessageBox.Icon.Information)
                 self.msg.setWindowTitle("Información")
-
                 self.msg.setText("Se ha exportado correctamente el archivo")
                 self.msg.exec()
-
-        except:
+        except Exception:
             pass

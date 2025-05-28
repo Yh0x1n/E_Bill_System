@@ -3,7 +3,7 @@ Módulo de gestión de productos y servicios
 """
 from PySide6.QtWidgets import QWidget, QMainWindow, QVBoxLayout, QGridLayout, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QLineEdit, QMessageBox
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
@@ -130,8 +130,10 @@ class Product(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar producto")
+        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
+        self.w.setWindowFlags(Qt.WindowCloseButtonHint)
         
         central_widget = QWidget(self.w)
         central_widget.setContentsMargins(10, 10, 10, 10)
@@ -257,8 +259,10 @@ class Product(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Editar producto")
+        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
+        self.w.setWindowFlags(Qt.WindowCloseButtonHint)
         
         central_widget = QWidget(self.w)
         central_widget.setContentsMargins(10, 10, 10, 10)

@@ -4,12 +4,15 @@ Módulo de gestión de clientes
 
 from PySide6.QtWidgets import QWidget, QMainWindow, QVBoxLayout, QGridLayout, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QLineEdit, QMessageBox
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
+from service import s
+import pandas as pd
+
 
 class Client(QWidget):
     def __init__(self, parent=None):
@@ -73,9 +76,6 @@ class Client(QWidget):
             button.setToolTip(description[i])
 
     def initList(self): #Inicio de la lista de clientes
-        import pandas as pd
-        from service import s
-
         self.listLayout = QVBoxLayout()
         self.listLayout.setAlignment(Qt.AlignBottom)
         self.listLayout.setContentsMargins(0, 0, 0, 0)
@@ -125,8 +125,10 @@ class Client(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")
+        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
+        self.w.setWindowFlags(Qt.WindowCloseButtonHint)
         
         central_widget = QWidget(self.w)
         central_widget.setContentsMargins(10, 10, 10, 10)
@@ -250,8 +252,10 @@ class Client(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")
+        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
+        self.w.setWindowFlags(Qt.WindowCloseButtonHint)
         
         central_widget = QWidget(self.w)
         central_widget.setContentsMargins(10, 10, 10, 10)

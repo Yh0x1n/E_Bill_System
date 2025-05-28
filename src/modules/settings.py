@@ -2,11 +2,9 @@
 Módulo con un widget de ventana para configurar el tema, gestionar los usuarios y la información del proveedor
 """
 
-#TO-DO: ARREGLAR LOS ESTILOS Y ALINEACIÓN DE LOS BOTONES
-
 #Importaciones
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QLineEdit, QComboBox, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QMainWindow, QMessageBox
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Qt
 import pandas as pd
 from styles.buttons import ButtonFactory
@@ -27,7 +25,9 @@ class SettingsWindow(QWidget):
         """
         super().__init__()
         self.setWindowTitle("Ajustes")
+        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.setGeometry(100, 100, 300, 200)
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
 
         self.settings_layout = QGridLayout()
         self.setLayout(self.settings_layout)
@@ -44,11 +44,14 @@ class SettingsWindow(QWidget):
 
         # Botón para mostrar información del proveedor
         self.show_provider_info_button = button.create_button("Mostrar", "default_black", None, 12, (100, 40))
+        self.show_provider_info_button.setStyleSheet(self.show_provider_info_button.styleSheet() + "QPushButton{border: 2px solid black; border-radius: 20px;} QPushButton:hover{background-color: #e0e0e0;}")
         self.show_provider_info_button.clicked.connect(self.show_provider_info)
         self.settings_layout.addWidget(self.show_provider_info_button, 0, 1)
 
         # Botón para editar la información del proveedor
         self.edit_provider_info_button = button.create_button("Editar", "default_black", None, 12, (100, 40))
+        self.edit_provider_info_button.setStyleSheet(
+            self.edit_provider_info_button.styleSheet() + "QPushButton{border: 2px solid black; border-radius: 20px;} QPushButton:hover{background-color: #e0e0e0;}")
         self.edit_provider_info_button.clicked.connect(self.set_provider_info)
         self.settings_layout.addWidget(self.edit_provider_info_button, 0, 2)
 
@@ -91,9 +94,10 @@ class SettingsWindow(QWidget):
         self.settings_layout.addWidget(self.user_table, 4, 0, 1, 3)  # Fila 4, columna 0-2
 
         button = ButtonFactory()
-        self.btn_salir = button.create_button("Salir", "exit", None, 10, (75, 35))
+        self.btn_salir = button.create_button("Salir", "exit", None, 12, (50, 40))
+        self.btn_salir.setStyleSheet(self.btn_salir.styleSheet() + "QPushButton{border-radius: 20px; padding: 5px; text-align: center;}")
         self.btn_salir.clicked.connect(self.close)
-        self.settings_layout.addWidget(self.btn_salir, 5, 2, 1, 3)
+        self.settings_layout.addWidget(self.btn_salir, 5, 2)
 
         # Ajustar el tamaño de las columnas según la longitud de sus campos
         self.user_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -121,6 +125,7 @@ class SettingsWindow(QWidget):
 
         self.w = QMainWindow()
         self.w.setWindowTitle("Lanchmann - Editar Usuario")
+        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(10, 10, 10, 10)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -223,7 +228,6 @@ class SettingsWindow(QWidget):
 
         self.w.show()
 
-    #TO-DO: CREAR LA LÓGICA DE ESTOS MÓDULOS
     def delete_user(self):
         pass
 
@@ -248,6 +252,7 @@ class SettingsWindow(QWidget):
 
         self.provider_window = QMainWindow()
         self.provider_window.setWindowTitle("Editar Información del Proveedor")
+        self.provider_window.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
         self.provider_window.setStyleSheet("background-color: white;")
         self.provider_window.setWindowFlags(Qt.WindowCloseButtonHint)
 

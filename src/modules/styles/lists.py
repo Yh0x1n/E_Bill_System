@@ -36,6 +36,52 @@ def apply_table_style(table: QTableWidget):
             color: #333333;
             padding: 4px;
         }
+        QScrollBar:vertical {
+            border: none;
+            background: #f1f1f1;
+            width: 12px;
+            margin: 0px 0px 0px 0px;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:vertical {
+            background: #b0b0b0;
+            min-height: 20px;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:vertical:hover {
+            background: #a0a0a0;
+        }
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            height: 0px;
+            subcontrol-origin: margin;
+        }
+        QScrollBar:horizontal {
+            border: none;
+            background: #f1f1f1;
+            height: 12px;
+            margin: 0px 0px 0px 0px;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #b0b0b0;
+            min-width: 20px;
+            border-radius: 6px;
+        }
+        QScrollBar::handle:horizontal:hover {
+            background: #a0a0a0;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            width: 0px;
+            subcontrol-origin: margin;
+        }
+        QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical,
+        QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+            background: none;
+        }
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical,
+        QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+            background: none;
+        }
         """
     )
 

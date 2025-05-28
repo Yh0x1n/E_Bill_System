@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
         self.total_label = label.create_label("Total de ventas", font="Archivo Medium", style="medium_black", font_size=16)
         self.dashboardMidLayout.addWidget(self.total_label, 1, 1, Qt.AlignRight)
 
-        self.money = label.create_label("$0.00", font="Archivo Medium", style="money", font_size=24)
+        self.money = label.create_label(str(f"${s.get_total_amount_invoices()}"), font="Archivo Medium", style="money", font_size=24)
         self.dashboardMidLayout.addWidget(self.money, 2, 1, Qt.AlignRight | Qt.AlignBottom)
 
         # Gráfico de resumen de clientes, productos y facturas
@@ -177,11 +177,18 @@ class MainWindow(QMainWindow):
         def update_dashboard_chart(self):
             counts = get_dashboard_counts()
             set_pie_series(self.series, counts)
-
-        self.update_dashboard_chart = update_dashboard_chart.__get__(self)
+        
+        def update_money_label(self): #Actualiza el dinero recaudado en las facturas al regresar al menú principal
+            self.money.setText(str(f"${s.get_total_amount_invoices()}"))
 
         # Llamar a update_dashboard_chart al mostrar/ocultar frames relevantes
+        self.update_dashboard_chart = update_dashboard_chart.__get__(self)
         self.update_dashboard_chart()
+
+        # Llamar a update_money_label al mostrar/ocultar frames relevantes
+        self.update_money_label = update_money_label.__get__(self)
+        self.update_money_label()
+
 
     def createButtons(self):
         button = ButtonFactory()
@@ -211,6 +218,7 @@ class MainWindow(QMainWindow):
         self.btn_ayuda = button.create_button("Ayuda", style = "sales", font_size=14, min_size=(100,0))
         self.btn_ayuda.setFixedWidth(100)
         self.sideMidTopLayout.addWidget(self.btn_ayuda, 2, 0, Qt.AlignLeft)
+        self.btn_ayuda.clicked.connect(self.show_help)
 
         self.btn_about = button.create_button("Acerca de", style = "sales", font_size=14, min_size=(130,0))
         self.btn_about.clicked.connect(self.about)
@@ -281,16 +289,20 @@ class MainWindow(QMainWindow):
             back_button.setVisible(False)
             for element in dashboard_elements:
                 element.setVisible(True)
-            # Actualizar el chart al volver al dashboard
+            # Actualizar el chart y el label de dinero al volver al dashboard
             self.update_dashboard_chart()
+            self.update_money_label()
+
         else:
             # Mostrar el frame y ocultar los elementos originales del dashboard
             frame.setVisible(True)
             back_button.setVisible(True)
             for element in dashboard_elements:
                 element.setVisible(False)
-            # Actualizar el chart al mostrar el frame
+            # Actualizar el chart y el label de dinero al mostrar el frame
             self.update_dashboard_chart()
+            self.update_money_label()
+
 
     def toggle_client_frame(self):
         from clients import Client
@@ -435,6 +447,11 @@ class MainWindow(QMainWindow):
     
     def close_window(self):
         self.close()
+
+    def show_help(self):
+        from help import HelpWindow
+        self.help_window = HelpWindow()
+        self.help_window.show()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

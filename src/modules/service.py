@@ -227,6 +227,11 @@ class Service: # Clase que realiza la conexión a la DB
         self.cur.execute("SELECT * FROM usuario where id = ?", user_id)
         return self.cur.fetchall()
     
+    def get_total_amount_invoices(self): #Este método obtiene la suma total de todos los totales de las facturas
+        self.cur.execute("SELECT SUM(total) FROM facturas;")
+        total = self.cur.fetchone()[0]
+        return total if total is not None else 0.0
+    
     def close(self): #Cierra la conexión
         if self.conn:
             self.conn.close()
