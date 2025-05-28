@@ -1,6 +1,6 @@
 """Script que se encarga de las exportaciones de los datos a CSV y Excel"""
 
-import pandas as pd
+import polars as pl
 from datetime import datetime
 from service import s
 from PySide6.QtWidgets import QFileDialog, QMessageBox, QWidget
@@ -39,8 +39,8 @@ class Export:
                 if not query:
                     raise ValueError("Caller no reconocido")
 
-                # Ejecuta la consulta y obtiene los datos
-                df = pd.read_sql(query, s.conn)
+                # Ejecuta la consulta y obtiene los datos usando Polars
+                df = pl.read_database(query, s.conn)
                 filename, ext = os.path.splitext(file_path[0])
                 if not ext:
                     ext = '.xlsx'  # Por defecto, siempre exportar como Excel
@@ -61,8 +61,8 @@ class Export:
                         # Si se elige sobrescribir, elimina el archivo existente
                         os.remove(filename + ext)
 
-                # Exporta a Excel
-                df.to_excel(filename + ext, index=False)
+                # Exportar a Excel usando Polars
+                df.write_excel(filename + ext)
 
                 # Mensaje de confirmación
                 self.msg.setIcon(QMessageBox.Icon.Information)

@@ -9,7 +9,10 @@ from service import s
 from styles.labels import LabelFactory
 from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
-import random, os, sys, pandas as pd
+from invoice_lib.templates import SimpleInvoice
+from invoice_lib.models import ServiceProviderInfo, ClientInfo, InvoiceInfo, Item
+import random, os
+import polars as pl
 from styles.lists import apply_table_style
 
 class Invoice(QWidget):
@@ -136,7 +139,7 @@ class Invoice(QWidget):
                 client_id = self.client_combobox.currentText().split(" - ")[0]
                 query = f"SELECT id_cliente, nombre_cliente, email FROM cliente WHERE id_cliente = '{client_id}';"
                 client_data = s.cur.execute(query).fetchone()
-                self.client_details_label.setText(f"ID: {client_data[0]}        Nombre: {client_data[1]}"
+                self.client_details_label.setText(f"ID: {client_data[0]}     Nombre: {client_data[1]}"
                                                   f"\nEmail: {client_data[2]}")
         self.client_combobox.currentIndexChanged.connect(update_client_details)
         self.fieldsLayout.addWidget(self.client_combobox, 1, 0, Qt.AlignLeft)
@@ -144,21 +147,16 @@ class Invoice(QWidget):
     
     def initList(self):
         l = LabelFactory()
-
         self.listLayout = QVBoxLayout()
         self.listLayout.setAlignment(Qt.AlignBottom)
         self.listLayout.setContentsMargins(0, 0, 0, 0)
-
         self.total_amount_label = l.create_label("Total: $0.00", "Archivo Medium", "money", 20)
         self.fieldsLayout.addWidget(self.total_amount_label, 4, 1, 1, 4, Qt.AlignRight)
-        
-        # Fetch data from the database
-        df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
-
-        # Crear y configurar la tabla
+        # Fetch data from the database usando Polars
+        df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
         self.product_table = QTableWidget()
-        self.product_table.setRowCount(len(df))
-        self.product_table.setColumnCount(len(df.columns) + 2)  # Add two extra columns for units counter and checkboxes
+        self.product_table.setRowCount(df.height)
+        self.product_table.setColumnCount(len(df.columns) + 2)
         self.product_table.setHorizontalHeaderLabels(["N°", "Nombre", "Precio", "Unidades", "Seleccionar"])
         self.product_table.setMinimumSize(600, 200)
         self.product_table.setContentsMargins(0, 0, 0, 0)
@@ -167,54 +165,37 @@ class Invoice(QWidget):
         self.product_table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.product_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.product_table.setSelectionMode(QTableWidget.SingleSelection)
-
         apply_table_style(self.product_table)
-
         for i in range(self.product_table.rowCount()):
             self.product_table.setRowHeight(i, 40)
-        
-        # Llenar la tabla con datos y agregar checkboxes
-        for i, row in df.iterrows():
+        # Llenar la tabla con datos y agregar checkboxes usando Polars
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 item = QTableWidgetItem(str(value))
                 self.product_table.setItem(i, j, item)
-
-            # Crear y agregar el checkbox
             checkbox = QCheckBox()
             checkbox.stateChanged.connect(self.update_total_amount)
-
-            #Crear el widget para el checkbox
             checkbox_cell_widget = QWidget()
             checkbox_cell_layout = QHBoxLayout(checkbox_cell_widget)
             checkbox_cell_layout.setAlignment(Qt.AlignCenter)
             checkbox_cell_layout.setContentsMargins(0, 0, 0, 0)
             checkbox_cell_layout.addWidget(checkbox)
             self.product_table.setCellWidget(i, 4, checkbox_cell_widget)
-
-            #Crear el widget para los botones + y - del contador
             counter_cell_widget = QWidget()
-            counter_cell_layout = QHBoxLayout(counter_cell_widget)   
+            counter_cell_layout = QHBoxLayout(counter_cell_widget)
             counter_cell_layout.setAlignment(Qt.AlignCenter)
             counter_cell_layout.setContentsMargins(0, 0, 0, 0)
-            
-            # Crear nuevos botones y etiqueta para cada fila
             btn_minus = ButtonFactory().create_button("-", "default_black", None, min_size=(10, 10))
             btn_plus = ButtonFactory().create_button("+", "default_black", None, min_size=(10, 10))
             unit_label = l.create_label("1", "Archivo Medium", "medium_black", 12)
-            
-            # Conectar los botones a funciones que actualicen unit_label (cada función debe saber a qué etiqueta modificar)
             btn_minus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(max(0, int(lbl.text()) - 1))), self.update_total_amount()))
             btn_plus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(int(lbl.text()) + 1)), self.update_total_amount()))
-            
             counter_cell_layout.addWidget(btn_minus)
             counter_cell_layout.addWidget(unit_label)
             counter_cell_layout.addWidget(btn_plus)
             self.product_table.setCellWidget(i, 3, counter_cell_widget)
-        
-            self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-            self.product_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-            #self.product_table.horizontalHeader().setStretchLastSection(True)
-
+        self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.product_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
         def handle_table_click(row, col):
             if col == 4:
                 checkbox_cell_widget = self.product_table.cellWidget(row, col)
@@ -222,18 +203,12 @@ class Invoice(QWidget):
                     checkbox = checkbox_cell_widget.findChild(QCheckBox)
                     if checkbox:
                         checkbox.setChecked(not checkbox.isChecked())
-
         self.product_table.cellClicked.connect(handle_table_click)
-
-        # Formatear el precio con un signo de dólar
         for i in range(self.product_table.rowCount()):
             price_item = self.product_table.item(i, 2)
             if price_item:
-                price_item.setText(f"${price_item.text()}")
-        
-        # Perform initial total calculation
+                price_item.setText(f"${{price_item.text()}}")
         self.update_total_amount()
-
         self.invoiceLayout.addLayout(self.listLayout)
         self.listLayout.addWidget(self.product_table)
         
@@ -269,44 +244,37 @@ class Invoice(QWidget):
         for client in clients:
             self.client_combobox.addItem(f"{client[0]} - {client[1]}")
         
-        # Actualizar la tabla de productos
-        df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
-        self.product_table.setRowCount(len(df))
+        # Actualizar la tabla de productos usando Polars
+        df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
+        self.product_table.setRowCount(df.height)
 
         for i in range(self.product_table.rowCount()):
             self.product_table.setRowHeight(i, 40)
 
-        for i, row in df.iterrows():
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 item = QTableWidgetItem(str(value))
                 self.product_table.setItem(i, j, item)
-            
             #Actualizar las checkboxes
             checkbox = QCheckBox()
             checkbox.stateChanged.connect(self.update_total_amount)
-
             checkbox_cell_widget = QWidget()
             checkbox_cell_layout = QHBoxLayout(checkbox_cell_widget)
             checkbox_cell_layout.setAlignment(Qt.AlignCenter)
             checkbox_cell_layout.setContentsMargins(0, 0, 0, 0)
             checkbox_cell_layout.addWidget(checkbox)
             self.product_table.setCellWidget(i, 4, checkbox_cell_widget)
-
+            
             #Actualizar el contador
             counter_cell_widget = QWidget()
-            counter_cell_layout = QHBoxLayout(counter_cell_widget)   
+            counter_cell_layout = QHBoxLayout(counter_cell_widget)
             counter_cell_layout.setAlignment(Qt.AlignCenter)
             counter_cell_layout.setContentsMargins(0, 0, 0, 0)
-            
-            # Crear nuevos botones y etiqueta para cada fila
             btn_minus = ButtonFactory().create_button("-", "default_black", None, min_size=(10, 10))
             btn_plus = ButtonFactory().create_button("+", "default_black", None, min_size=(10, 10))
             unit_label = l.create_label("1", "Archivo Medium", "medium_black", 12)
-            
-            # Conectar los botones a funciones que actualicen unit_label (cada función debe saber a qué etiqueta modificar)
             btn_minus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(max(0, int(lbl.text()) - 1))), self.update_total_amount()))
             btn_plus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(int(lbl.text()) + 1)), self.update_total_amount()))
-            
             counter_cell_layout.addWidget(btn_minus)
             counter_cell_layout.addWidget(unit_label)
             counter_cell_layout.addWidget(btn_plus)
@@ -320,9 +288,6 @@ class Invoice(QWidget):
                     price_item.setText(f"${price_item.text()}")
 
     def generate_invoice(self):
-        from invoice_lib.templates import SimpleInvoice
-        from invoice_lib.models import ServiceProviderInfo, ClientInfo, InvoiceInfo, Item
-
         msg = MsgBoxFactory()
         now = datetime.now()
         q = msg.create_question_box("question", "Generar factura", "¿Desea generar la factura?", QMessageBox.Question,
@@ -330,6 +295,34 @@ class Invoice(QWidget):
         q.exec()
         if q.clickedButton().text() == "Confirmar":
             try:
+                # Validaciones previas antes de generar la factura
+                cliente_seleccionado = bool(self.client_combobox.currentText())
+                productos_seleccionados = any(
+                    self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()
+                    for i in range(self.product_table.rowCount())
+                )
+                if not cliente_seleccionado and not productos_seleccionados:
+                    r = msg.create_msg_box(
+                        "warning", "Advertencia", "Debe seleccionar un cliente y al menos un producto.",
+                        QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
+                    )
+                    r.exec()
+                    return
+                elif not cliente_seleccionado:
+                    r = msg.create_msg_box(
+                        "warning", "Advertencia", "Debe seleccionar un cliente antes de generar la factura.",
+                        QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
+                    )
+                    r.exec()
+                    return
+                elif not productos_seleccionados:
+                    r = msg.create_msg_box(
+                        "warning", "Advertencia", "Debe seleccionar al menos un producto en la lista.",
+                        QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
+                    )
+                    r.exec()
+                    return
+
                 # Obtener datos del cliente y los productos seleccionados
                 client_id = self.client_combobox.currentText().split(" - ")[0]
                 product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]

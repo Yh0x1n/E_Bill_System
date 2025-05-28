@@ -9,6 +9,8 @@ from styles.buttons import ButtonFactory
 from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
+from service import s
+import polars as pl
 
 class Product(QWidget):
     def __init__(self, parent=None):
@@ -71,21 +73,19 @@ class Product(QWidget):
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
 
-    def initList(self): # Inicio de la lista de productos y servicios
-        import pandas as pd
-        from service import s
+    def initList(self): # Inicio de la lista de productos y servicio
 
         self.listLayout = QVBoxLayout()
         self.listLayout.setAlignment(Qt.AlignBottom)
         self.listLayout.setContentsMargins(0, 0, 0, 0)
         self.productLayout.addLayout(self.listLayout)
 
-        # Fetch data from the database
-        df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
+        # Fetch data from the database usando Polars
+        df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
 
         # Crear y configurar la tabla
         self.product_table = QTableWidget()
-        self.product_table.setRowCount(len(df))
+        self.product_table.setRowCount(df.height)
         self.product_table.setColumnCount(len(df.columns))
         self.product_table.setHorizontalHeaderLabels(["N°", "Nombre", "Precio"])
         self.product_table.setMinimumSize(600, 200)
@@ -95,8 +95,8 @@ class Product(QWidget):
         self.product_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.product_table.setSelectionMode(QTableWidget.SingleSelection)
 
-        # Llenar la tabla con datos
-        for i, row in df.iterrows():
+        # Llenar la tabla con datos usando Polars
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 self.product_table.setItem(i, j, QTableWidgetItem(str(value)))
 
@@ -105,7 +105,7 @@ class Product(QWidget):
         for i in range(self.product_table.rowCount()):
             price_item = self.product_table.item(i, 2)
             if price_item:
-                price_item.setText(f"${price_item.text()}")
+                price_item.setText(f"${{price_item.text()}}")
     
         self.listLayout.addWidget(self.product_table)
         self.product_table.itemDoubleClicked.connect(lambda _: self.show_details())
@@ -160,8 +160,6 @@ class Product(QWidget):
         buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
         # Definir la función command antes de conectar señales
         def command():
-            from service import s
-            import pandas as pd
 
             # Obtener los valores de cada campo
             fields_values = [
@@ -175,22 +173,19 @@ class Product(QWidget):
             else:
                 try:
                     msgbox = MsgBoxFactory()
-                    
                     q = msgbox.create_question_box("question", "Información", "¿Deseas añadir este producto?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
                     q.exec()
 
                     if q.clickedButton().text() == "Sí":
                         q2 = msgbox.create_msg_box("information", "Información", "Producto agregado correctamente", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                         q2.exec()
-
                         s.insert_product(*values)
-                        
                         self.w.close()
 
-                    # Refrescar la tabla con los nuevos datos
-                    df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
-                    self.product_table.setRowCount(len(df))
-                    for i, row in df.iterrows():
+                    # Refrescar la tabla con los nuevos datos usando Polars
+                    df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
+                    self.product_table.setRowCount(df.height)
+                    for i, row in enumerate(df.iter_rows()):
                         for j, value in enumerate(row):
                             self.product_table.setItem(i, j, QTableWidgetItem(str(value)))
 
@@ -198,8 +193,7 @@ class Product(QWidget):
                     for i in range(self.product_table.rowCount()):
                         price_item = self.product_table.item(i, 2)
                         if price_item:
-                            price_item.setText(f"${price_item.text()}")
-
+                            price_item.setText(f"${{price_item.text()}}")
                 except Exception as e:
                     print("Error al insertar el producto:", e)
         def close():
@@ -239,8 +233,7 @@ class Product(QWidget):
 
         self.w.show()
 
-    def edit_product(self): # Método para editar productos y servicios
-        from service import s
+    def edit_product(self): # Método para editar productos y servicio
 
         label = LabelFactory()
         button = ButtonFactory()
@@ -305,8 +298,6 @@ class Product(QWidget):
         buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
 
         def command():
-            from service import s
-            import pandas as pd
 
             # Obtener los valores de cada campo
             fields_values = [
@@ -327,10 +318,10 @@ class Product(QWidget):
                     s.edit_product(product_id, *values)
                     self.w.close()
 
-                # Refrescar la tabla con los nuevos datos
-                df = pd.read_sql("SELECT id_producto, nombre, precio FROM producto;", s.conn)
-                self.product_table.setRowCount(len(df))
-                for i, row in df.iterrows():
+                # Refrescar la tabla con los nuevos datos usando Polars
+                df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
+                self.product_table.setRowCount(df.height)
+                for i, row in enumerate(df.iter_rows()):
                     for j, value in enumerate(row):
                         self.product_table.setItem(i, j, QTableWidgetItem(str(value)))
 
@@ -338,7 +329,7 @@ class Product(QWidget):
                 for i in range(self.product_table.rowCount()):
                     price_item = self.product_table.item(i, 2)
                     if price_item:
-                        price_item.setText(f"${price_item.text()}")
+                        price_item.setText(f"${{price_item.text()}}")
             except Exception as e:
                 print("Error al editar el producto:", e)
 
@@ -381,8 +372,7 @@ class Product(QWidget):
 
         self.w.show()
     
-    def delete_product(self): # Método para borrar un producto o servicio
-        from service import s
+    def delete_product(self): # Método para borrar un producto o servici
         
         msgbox = MsgBoxFactory()
 
@@ -412,7 +402,6 @@ class Product(QWidget):
             QMessageBox.critical(self, "Error", f"No se pudo eliminar el producto: {e}")
 
     def show_details(self):
-        from service import s
 
         # Obtener el ID del producto
         selected_items = self.product_table.selectedItems()

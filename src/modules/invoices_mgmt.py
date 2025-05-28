@@ -8,7 +8,7 @@ from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
 from service import s
-import pandas as pd
+import polars as pl
 
 class InvoiceMgmt(QWidget):
     def __init__(self, parent=None):
@@ -64,8 +64,8 @@ class InvoiceMgmt(QWidget):
         self.listLayout.setContentsMargins(0, 0, 0, 0)
         self.invoiceLayout.addLayout(self.listLayout)
         
-        # Fetch data from the database
-        df = pd.read_sql(
+        # Fetch data from the database usando Polars
+        df = pl.read_database(
             """
             SELECT f.id_factura, f.fecha_emision, c.nombre_cliente AS cliente, f.total
             FROM facturas f
@@ -75,7 +75,7 @@ class InvoiceMgmt(QWidget):
         )
         
         self.invoice_table = QTableWidget()
-        self.invoice_table.setRowCount(len(df))
+        self.invoice_table.setRowCount(df.height)
         self.invoice_table.setColumnCount(len(df.columns))
         self.invoice_table.setHorizontalHeaderLabels(["N°", "Fecha", "Cliente", "Total"])
         self.invoice_table.setMinimumSize(600, 200)
@@ -85,7 +85,7 @@ class InvoiceMgmt(QWidget):
         self.invoice_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.invoice_table.setSelectionMode(QTableWidget.SingleSelection)
         
-        for i, row in df.iterrows():
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 self.invoice_table.setItem(i, j, QTableWidgetItem(str(value)))
         
@@ -93,14 +93,12 @@ class InvoiceMgmt(QWidget):
         
         for i in range(self.invoice_table.rowCount()):
             total_item = self.invoice_table.item(i, 3)
-        
             if total_item:
                 try:
                     total_value = float(total_item.text())
-                    total_item.setText(f"${total_value:.2f}")
-        
-                except ValueError:
-                    total_item.setText(f"${total_item.text()}")
+                    total_item.setText(f"${{total_value:.2f}}")
+                except Exception:
+                    pass
         
         self.listLayout.addWidget(self.invoice_table)
         self.invoice_table.itemDoubleClicked.connect(lambda _: self.show_details())
@@ -158,13 +156,12 @@ class InvoiceMgmt(QWidget):
             WHERE f.id_factura = ?;
         """
         
-        df = pd.read_sql(query, s.conn, params=[invoice_id])
+        df = pl.read_database(query, s.conn, params=[invoice_id])
         
-        if not df.empty:
-            invoice_date = df.at[0, "fecha_emision"]
-            invoice_client = df.at[0, "cliente"]
-            invoice_total = df.at[0, "total"]
-        
+        if df.height > 0:
+            invoice_date = df["fecha_emision"][0]
+            invoice_client = df["cliente"][0]
+            invoice_total = df["total"][0]
         else:
             invoice_date = invoice_client = invoice_total = "N/A"
 
@@ -197,10 +194,9 @@ class InvoiceMgmt(QWidget):
 
     def update_list_on_change(self):
         """Actualiza la lista de facturas cuando se realizan cambios y al entrar al módulo (cuando se guardan nuevas facturas)."""
-        df = pd.read_sql("""SELECT f.id_factura, f.fecha_emision, c.nombre_cliente AS cliente, f.total
-                        FROM facturas f JOIN cliente c ON f.id_cliente = c.id_cliente;""",s.conn)
-        
-        self.invoice_table.setRowCount(len(df))
-        for i, row in df.iterrows():
+        df = pl.read_database("""SELECT f.id_factura, f.fecha_emision, c.nombre_cliente AS cliente, f.total
+                        FROM facturas f JOIN cliente c ON f.id_cliente = c.id_cliente;""", s.conn)
+        self.invoice_table.setRowCount(df.height)
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 self.invoice_table.setItem(i, j, QTableWidgetItem(str(value)))

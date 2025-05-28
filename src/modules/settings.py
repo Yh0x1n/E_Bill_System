@@ -6,7 +6,7 @@ Módulo con un widget de ventana para configurar el tema, gestionar los usuarios
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QLineEdit, QComboBox, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QMainWindow, QMessageBox
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Qt
-import pandas as pd
+import polars as pl
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
@@ -75,10 +75,10 @@ class SettingsWindow(QWidget):
 
     def init_user_list(self):
         # Método que inicializa la lista de los usuarios registrados en la DB
-        df = pd.read_sql_query("SELECT id, username, email FROM usuario;", s.conn)
+        df = pl.read_database("SELECT id, username, email FROM usuario;", s.conn)
 
         self.user_table = QTableWidget()
-        self.user_table.setRowCount(len(df))
+        self.user_table.setRowCount(df.height)
         self.user_table.setColumnCount(len(df.columns))
         self.user_table.setHorizontalHeaderLabels(["ID", "Nombre", "Email"])
         self.user_table.setMinimumSize(600, 200)
@@ -86,8 +86,8 @@ class SettingsWindow(QWidget):
         self.user_table.setFont(QFont("Archivo Medium", 12))
         self.user_table.setEditTriggers(QTableWidget.NoEditTriggers)
 
-        # Llenar la tabla con datos
-        for i, row in df.iterrows():
+        # Llenar la tabla con datos usando Polars
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 self.user_table.setItem(i, j, QTableWidgetItem(str(value)))
 
@@ -189,10 +189,10 @@ class SettingsWindow(QWidget):
                     s.edit_user(user_id, *values)
                     self.w.close()
 
-                # Refrescar la tabla con los nuevos datos
-                df = pd.read_sql("SELECT id, username, email FROM usuario;", s.conn)
-                self.user_table.setRowCount(len(df))
-                for i, row in df.iterrows():
+                # Refrescar la tabla con los nuevos datos usando Polars
+                df = pl.read_database("SELECT id, username, email FROM usuario;", s.conn)
+                self.user_table.setRowCount(df.height)
+                for i, row in enumerate(df.iter_rows()):
                     for j, value in enumerate(row):
                         self.user_table.setItem(i, j, QTableWidgetItem(str(value)))
 

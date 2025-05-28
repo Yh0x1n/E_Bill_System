@@ -284,6 +284,10 @@ class MainWindow(QMainWindow):
         back_button = getattr(self, back_button_attr)
 
         if frame.isVisible():
+            # Limpiar labels de Invoice si corresponde
+            if frame_attr == 'invoiceFrame':
+                frame.client_details_label.setText("")
+                frame.total_amount_label.setText("Total: $0.00")
             # Ocultar el frame y mostrar los elementos originales del dashboard
             frame.setVisible(False)
             back_button.setVisible(False)

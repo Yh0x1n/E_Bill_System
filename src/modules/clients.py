@@ -11,7 +11,7 @@ from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
 from service import s
-import pandas as pd
+import polars as pl
 
 
 class Client(QWidget):
@@ -81,12 +81,12 @@ class Client(QWidget):
         self.listLayout.setContentsMargins(0, 0, 0, 0)
         self.clientLayout.addLayout(self.listLayout)
 
-        # Fetch data from the database
-        df = pd.read_sql("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
+        # Fetch data from the database usando Polars
+        df = pl.read_database("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
 
         # Crear y configurar la tabla
         self.client_table = QTableWidget()
-        self.client_table.setRowCount(len(df))
+        self.client_table.setRowCount(df.height)
         self.client_table.setColumnCount(len(df.columns))
         self.client_table.setHorizontalHeaderLabels(["N°", "Nombre", "Teléfono", "Email"])
         self.client_table.setMinimumSize(600, 200)
@@ -96,8 +96,8 @@ class Client(QWidget):
         self.client_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.client_table.setSelectionMode(QTableWidget.SingleSelection)
 
-        # Llenar la tabla con datos
-        for i, row in df.iterrows():
+        # Llenar la tabla con datos usando Polars
+        for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 self.client_table.setItem(i, j, QTableWidgetItem(str(value)))
 
@@ -158,8 +158,6 @@ class Client(QWidget):
         # Definir la función command antes de conectar señales
         def command():
             from service import s
-            import pandas as pd
-
             # Obtener los valores de cada campo
             fields_values = [
             ('nombre', self.nombre_input),
@@ -174,25 +172,21 @@ class Client(QWidget):
             else:
                 try:
                     msgbox = MsgBoxFactory()
-                    
                     q = msgbox.create_question_box("question", "Información", "¿Deseas añadir este cliente?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
                     q.exec()
 
                     if q.clickedButton().text() == "Sí":
                         q2 = msgbox.create_msg_box("information", "Información", "Cliente agregado correctamente", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                         q2.exec()
-
                         s.insert_client(*values)
-                        
                         self.w.close()
 
-                    # Refrescar la tabla con los nuevos datos
-                    df = pd.read_sql("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
-                    self.client_table.setRowCount(len(df))
-                    for i, row in df.iterrows():
+                    # Refrescar la tabla con los nuevos datos usando Polars
+                    df = pl.read_database("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
+                    self.client_table.setRowCount(df.height)
+                    for i, row in enumerate(df.iter_rows()):
                         for j, value in enumerate(row):
                             self.client_table.setItem(i, j, QTableWidgetItem(str(value)))
-
                 except Exception as e:
                     print("Error al insertar el cliente:", e)
         def close():
@@ -327,10 +321,10 @@ class Client(QWidget):
                     s.edit_client(client_id, *values)
                     self.w.close()
 
-                # Refrescar la tabla con los nuevos datos
-                df = pd.read_sql("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
-                self.client_table.setRowCount(len(df))
-                for i, row in df.iterrows():
+                # Refrescar la tabla con los nuevos datos usando Polars
+                df = pl.read_database("SELECT id_cliente, nombre_cliente, telefono, email FROM cliente;", s.conn)
+                self.client_table.setRowCount(df.height)
+                for i, row in enumerate(df.iter_rows()):
                     for j, value in enumerate(row):
                         self.client_table.setItem(i, j, QTableWidgetItem(str(value)))
 
