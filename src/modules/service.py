@@ -11,8 +11,9 @@ class Service: # Clase que realiza la conexión a la DB
         try:
             db_path = os.path.abspath("src/modules/db/database.db")
 
-            if not os.path.exists(db_path):
-                os.mkdir("src/modules/db")
+            db_dir = os.path.dirname(db_path)
+            if not os.path.exists(db_dir):
+                os.makedirs(db_dir)
             
             self.conn = sql.connect(db_path)
             self.cur = self.conn.cursor()
