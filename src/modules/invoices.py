@@ -49,20 +49,20 @@ class Invoice(QWidget):
     def initButtons(self):
         button = ButtonFactory()
 
-        self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
+        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size = (75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, Qt.AlignTop | Qt.AlignRight)
 
-        self.btn_add_client = button.create_button("", "default_black", "src/assets/icons/add_client.png", min_size=(75, 75))
+        self.btn_add_client = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/add_client.png"), min_size=(75, 75))
         self.btn_add_client.clicked.connect(Client().add_client)
         self.fieldsLayout.addWidget(self.btn_add_client, 1, 1, Qt.AlignLeft)
 
-        self.btn_add_product = button.create_button("", "default_black", "src/assets/icons/add_product.png", min_size=(75, 75))
+        self.btn_add_product = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/add_product.png"), min_size=(75, 75))
         self.btn_add_product.clicked.connect(Product().add_product)
         self.fieldsLayout.addWidget(self.btn_add_product, 1, 2, Qt.AlignLeft)
 
-        self.btn_update_lists = button.create_button("", "default_black", "src/assets/icons/update.png", min_size=(75, 75))
+        self.btn_update_lists = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/update.png"), min_size=(75, 75))
         self.btn_update_lists.clicked.connect(self.update_lists)
         self.fieldsLayout.addWidget(self.btn_update_lists, 1, 3, Qt.AlignLeft)
 
@@ -237,6 +237,8 @@ class Invoice(QWidget):
     
     def update_lists(self): #Método que actualiza la combobox y la lista
         l = LabelFactory()
+        # Limpiar el label de detalles del cliente
+        self.client_details_label.setText("")
 
         # Actualizar la combobox de clientes
         self.client_combobox.clear()
@@ -296,26 +298,28 @@ class Invoice(QWidget):
         if q.clickedButton().text() == "Confirmar":
             try:
                 # Validaciones previas antes de generar la factura
-                cliente_seleccionado = bool(self.client_combobox.currentText())
-                productos_seleccionados = any(
+                selected_client = bool(self.client_combobox.currentText())
+                selected_products = any(
                     self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()
                     for i in range(self.product_table.rowCount())
                 )
-                if not cliente_seleccionado and not productos_seleccionados:
+                service_provider_data = s.cur.execute("SELECT nombre, nit, direccion, telefono, email FROM proveedor;").fetchone()
+                
+                if not selected_client and not selected_products:
                     r = msg.create_msg_box(
                         "warning", "Advertencia", "Debe seleccionar un cliente y al menos un producto.",
                         QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
                     )
                     r.exec()
                     return
-                elif not cliente_seleccionado:
+                elif not selected_client:
                     r = msg.create_msg_box(
                         "warning", "Advertencia", "Debe seleccionar un cliente antes de generar la factura.",
                         QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
                     )
                     r.exec()
                     return
-                elif not productos_seleccionados:
+                elif not selected_products:
                     r = msg.create_msg_box(
                         "warning", "Advertencia", "Debe seleccionar al menos un producto en la lista.",
                         QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
@@ -402,12 +406,35 @@ class Invoice(QWidget):
                 r.exec()
             
             except Exception as e:
-                error_msg = f"Error al generar la factura: {str(e)}"
-                r = msg.create_msg_box("error", "Error", error_msg, QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
-                r.exec()
+                if not service_provider_data:
+                    r = msg.create_question_box(
+                        "warning", "Advertencia", "No se ha configurado un proveedor de servicios. ¿Desea configurarlo ahora?",
+                        QMessageBox.Warning, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole]
+                    )
+                    r.exec()
+                    
+                    if r.clickedButton().text() == "Sí":
+                        from settings import SettingsWindow
+                        self.settings_window = SettingsWindow()
+                        self.settings_window.set_provider_info()
+                        self.settings_window.provider_saved.connect(
+                            lambda saved: (
+                                self.generate_invoice() if saved else
+                                msg.create_msg_box(
+                                    "warning", "Cancelado", "La operación fue cancelada y la factura no se generó.",
+                                    QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole
+                                ).exec()
+                            )
+                        )
+                    else:
+                        return
+                else:
+                    error_msg = f"Error al generar la factura: {str(e)}"
+                    r = msg.create_msg_box("error", "Error", error_msg, QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                    r.exec()
 
         else:
-            pass
+            pass    
 
     def save_invoice(self, invoice_id, fecha_emision, id_cliente, id_producto, pdf_path, emisor, subtotal, iva, total):
         # Lee el PDF como binario
@@ -419,6 +446,14 @@ class Invoice(QWidget):
             id_factura=invoice_id, fecha_emision=fecha_emision, id_cliente=id_cliente, id_producto=id_producto,
             comprobante=pdf_blob, emisor=emisor, subtotal=subtotal, iva=iva,total=total
         )
+
+        # Actualiza la lista de facturas del módulo invoice_mgmt.py
+        from invoices_mgmt import InvoiceMgmt
+        if hasattr(self, 'invoice_mgmt'):
+            self.invoice_mgmt.update_list_on_change()
+        else:
+            self.invoice_mgmt = InvoiceMgmt()
+            self.invoice_mgmt.update_list_on_change()
 
     def open_settings(self):
         from settings import SettingsWindow

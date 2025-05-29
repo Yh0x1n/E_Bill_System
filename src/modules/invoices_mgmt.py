@@ -9,6 +9,7 @@ from styles.lists import apply_table_style
 from export import Export
 from service import s
 import polars as pl
+import os
 
 class InvoiceMgmt(QWidget):
     def __init__(self, parent=None):
@@ -40,16 +41,16 @@ class InvoiceMgmt(QWidget):
         self.buttonLayout.setAlignment(Qt.AlignBottom)
         self.invoiceLayout.addLayout(self.buttonLayout)
 
-        self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size=(75, 75))
+        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size=(75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
 
-        self.btn_delete = button.create_button("", "default_black", "src/assets/icons/Trash.png", min_size=(75, 75))
+        self.btn_delete = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Trash.png"), min_size=(75, 75))
         self.btn_delete.clicked.connect(self.delete_invoice)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        self.btn_export = button.create_button("", "default_black", "src/assets/icons/excel.png", min_size=(75, 75))
+        self.btn_export = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/excel.png"), min_size=(75, 75))
         self.btn_export.clicked.connect(self.export)
         self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
@@ -95,8 +96,10 @@ class InvoiceMgmt(QWidget):
             total_item = self.invoice_table.item(i, 3)
             if total_item:
                 try:
-                    total_value = float(total_item.text())
-                    total_item.setText(f"${{total_value:.2f}}")
+                    # Eliminar el símbolo $ y comas si existen
+                    text = total_item.text().replace('$', '').replace(',', '').strip()
+                    total_value = float(text)
+                    total_item.setText(f"${total_value:.2f}")
                 except Exception:
                     pass
         
@@ -140,6 +143,7 @@ class InvoiceMgmt(QWidget):
             QMessageBox.critical(self, "Error", f"No se pudo eliminar la factura: {e}")
 
     def show_details(self):
+        # Obtener el ID de la factura seleccionada
         selected_items = self.invoice_table.selectedItems()
         
         if not selected_items:
@@ -148,38 +152,37 @@ class InvoiceMgmt(QWidget):
         row = selected_items[0].row()
         invoice_id = self.invoice_table.item(row, 0).text()
         
-        # Obtener los detalles completos de la factura desde la base de datos usando el ID seleccionado
-        query = """
-            SELECT f.id_factura, f.fecha_emision, c.nombre_cliente AS cliente, f.total
+        # Obtener los detalles desde la base de datos
+        details = s.cur.execute("""
+            SELECT f.id_factura, f.fecha_emision, c.nombre_cliente, f.total
             FROM facturas f
             JOIN cliente c ON f.id_cliente = c.id_cliente
-            WHERE f.id_factura = ?;
-        """
+            WHERE f.id_factura = ?
+        """, (invoice_id,)).fetchone()
         
-        df = pl.read_database(query, s.conn, params=[invoice_id])
+        if not details:
+            return
         
-        if df.height > 0:
-            invoice_date = df["fecha_emision"][0]
-            invoice_client = df["cliente"][0]
-            invoice_total = df["total"][0]
-        else:
-            invoice_date = invoice_client = invoice_total = "N/A"
-
+        labels = ["ID", "Fecha", "Cliente", "Total"]
+        details_text = ""
+        
+        for i, detail in enumerate(details):
+            if labels[i] == "Total":
+                details_text += f"<b>{labels[i]}:</b> ${float(detail):.2f}<br>"
+            
+            else:
+                details_text += f"<b>{labels[i]}:</b> {detail}<br>"
+       
         provider_name = s.cur.execute("SELECT nombre FROM proveedor;").fetchone()
-
-
-        # Aquí puedes obtener y mostrar los detalles de la factura
-        # Por ejemplo, mostrar un QMessageBox con los detalles
+       
+        if provider_name:
+            details_text += f"<b>Emisor:</b> {provider_name[0]}<br>"
+        
         msgbox = MsgBoxFactory()
         msg = msgbox.create_msg_box(
             "information",
-            "Detalles de la Factura",(
-            f"<h3>Detalles de la Factura</h3>"
-            f"<p><b>ID:</b> {invoice_id}</p>"
-            f"<p><b>Fecha:</b> {invoice_date}</p>"
-            f"<p><b>Cliente:</b> {invoice_client}</p>"
-            f"<p><b>Emisor:</b> {provider_name[0]}</p>"
-            f"<p><b>Total:</b> ${float(invoice_total):.2f}</p>"),
+            "Detalles de la Factura",
+            f"<h3>Detalles de la Factura</h3><p>{details_text}</p>",
             QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole
         )
         msg.exec()

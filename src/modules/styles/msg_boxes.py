@@ -4,6 +4,7 @@ Módulo que administra los estilos y creación de los mensajes de notificación.
 
 from PySide6.QtWidgets import QMessageBox, QPushButton, QLabel
 from PySide6.QtGui import QFont, QIcon
+import os
 
 class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
     def __init__(self):
@@ -84,7 +85,7 @@ class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
     
     def create_msg_box(self, style, title, text, icon, font, font_size, button, button_role = None):
         msg_box = QMessageBox(icon, title, text)
-        msg_box.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        msg_box.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../../assets/pictures/AqualabLogo.jpg")))
         msg_box.addButton(button, button_role)
         msg_box.setFont(QFont(font, font_size))
         msg_box.setStyleSheet(self.msg_box_styles[style])
@@ -93,6 +94,7 @@ class MsgBoxFactory(QMessageBox, QPushButton, QLabel):
 
     def create_question_box(self, style, title, text, icon, font, font_size, buttons = list, button_roles=list):
         question_box = QMessageBox(icon, title, text)
+        question_box.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../../assets/pictures/AqualabLogo.jpg")))
         
         if button_roles is None:
             button_roles = [None] * len(buttons)

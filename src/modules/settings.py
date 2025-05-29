@@ -5,19 +5,22 @@ Módulo con un widget de ventana para configurar el tema, gestionar los usuarios
 #Importaciones
 from PySide6.QtWidgets import QWidget, QPushButton, QGridLayout, QLabel, QLineEdit, QComboBox, QTableWidget, QSizePolicy, QTableWidgetItem, QHeaderView, QMainWindow, QMessageBox
 from PySide6.QtGui import QFont, QIcon
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 import polars as pl
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
 from service import s
 from styles.lists import apply_table_style
+import os
 
 class SettingsWindow(QWidget):
     """
     Clase que representa la ventana de configuración de la aplicación.
     Permite al usuario cambiar el tema, gestionar usuarios y ver información del proveedor.
     """
+    provider_saved = Signal(bool)  # True si guardó, False si canceló
+
     def __init__(self):
         """
         Constructor de la ventana de configuración.
@@ -25,7 +28,7 @@ class SettingsWindow(QWidget):
         """
         super().__init__()
         self.setWindowTitle("Ajustes")
-        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.setGeometry(100, 100, 300, 200)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
 
@@ -125,7 +128,7 @@ class SettingsWindow(QWidget):
 
         self.w = QMainWindow()
         self.w.setWindowTitle("Lanchmann - Editar Usuario")
-        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(10, 10, 10, 10)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -252,7 +255,7 @@ class SettingsWindow(QWidget):
 
         self.provider_window = QMainWindow()
         self.provider_window.setWindowTitle("Editar Información del Proveedor")
-        self.provider_window.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.provider_window.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.provider_window.setStyleSheet("background-color: white;")
         self.provider_window.setWindowFlags(Qt.WindowCloseButtonHint)
 
@@ -319,13 +322,15 @@ class SettingsWindow(QWidget):
                 q = msgbox.create_msg_box("information", "Éxito", "Información del proveedor guardada correctamente.", QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                 q.exec()
                 self.provider_window.close()
+                self.provider_saved.emit(True)  # Emitir señal de éxito
+            
             except Exception as e:
                 print("Error al guardar la información del proveedor:", e)
                 q = msgbox.create_msg_box("critical", "Error", "No se pudo guardar la información.", QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
                 q.exec()
 
         btn_save.clicked.connect(save_provider)
-        btn_cancel.clicked.connect(self.provider_window.close)
+        btn_cancel.clicked.connect(lambda: (self.provider_window.close(), self.provider_saved.emit(False)))
         self.provider_window.show()
     
     def show_provider_info(self):
@@ -337,17 +342,13 @@ class SettingsWindow(QWidget):
         proveedor = s.cur.fetchone()
 
         if not proveedor:
-            q = msgbox.create_msg_box(
-                "information",
-                "Información",
-                "No hay información del proveedor registrada.",
-                QMessageBox.Information,
-                "Archivo Medium",
-                12,
-                "Aceptar",
-                QMessageBox.AcceptRole
-            )
+            q = msgbox.create_question_box("question", "Información", "No hay información del proveedor registrada.\n¿Deseas registrar los datos ahora?", QMessageBox.Warning,
+                                        "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
             q.exec()
+            
+            if q.clickedButton().text() == "Sí":
+                self.set_provider_info()
+            
             return
 
         # Usar LabelFactory para el título y los campos
@@ -360,14 +361,5 @@ class SettingsWindow(QWidget):
         ]
         info_text = "<br>".join([lbl.text() for lbl in info_labels])
 
-        q = msgbox.create_msg_box(
-            "information",
-            "Información del Proveedor",
-            info_text,
-            QMessageBox.Information,
-            "Archivo Medium",
-            12,
-            "Aceptar",
-            QMessageBox.AcceptRole
-        )
-        q.exec()
+        msgbox.create_msg_box("information", "Información del Proveedor", info_text, QMessageBox.NoIcon,
+                                "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole).exec()

@@ -9,7 +9,7 @@ class HelpWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lanchmann - Ayuda y Guía al Usuario")
-        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.setMinimumSize(900, 700)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.setStyleSheet("background-color: white;")
@@ -88,6 +88,10 @@ class HelpWindow(QMainWindow):
             }
         ]
         
+        # Convertir rutas relativas a absolutas para las imágenes
+        for section in sections:
+            section['imgs'] = [os.path.join(os.path.dirname(__file__), "../assets/" + img_path.split("assets/")[-1]) for img_path in section['imgs']]
+        
         for section in sections:
             title = QLabel(section['title'])
             title.setFont(QFont("Archivo Black", 20))
@@ -105,7 +109,7 @@ class HelpWindow(QMainWindow):
             for img_path in section['imgs']:
                 if os.path.exists(img_path):
                     pix = QPixmap(img_path).scaledToWidth(450, Qt.SmoothTransformation)
-                    if img_path == 'src/assets/icons/excel.png':
+                    if os.path.basename(img_path) == 'excel.png':
                         pix = pix.scaledToHeight(50, Qt.SmoothTransformation)
                     img_label = QLabel()
                     img_label.setPixmap(pix)

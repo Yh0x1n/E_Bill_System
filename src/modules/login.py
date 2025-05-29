@@ -1,6 +1,8 @@
 """
 Script de inicio de sesión
 """
+import os.path
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QGridLayout, QLabel, QLineEdit, QMessageBox, QFrame, QSizePolicy
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QIcon, QPainter, QBrush, QPixmap
@@ -15,7 +17,7 @@ class LoginWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Lanchmann - Inicio de sesión")
-        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.setWindowIcon(QIcon(os.path.dirname(__file__) + "/../assets/pictures/AqualabLogo.jpg"))
         self.setFixedSize(640, 480)
         self.setStyleSheet("""background-color: white;""")
         for init_method in (self.initUI, self.initLabels, self.initButtons, self.check_login): #Inicialización de métodos
@@ -39,7 +41,7 @@ class LoginWindow(QMainWindow):
     
     def initLabels(self): #Creación de los labels
         self.profile_photo = QLabel()
-        pixmap = QIcon("src/assets/pictures/AqualabLogo.jpg").pixmap(100, 100)
+        pixmap = QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")).pixmap(100, 100)
         circular_pixmap = QPixmap(100, 100)
         circular_pixmap.fill(Qt.transparent)
         painter = QPainter(circular_pixmap)

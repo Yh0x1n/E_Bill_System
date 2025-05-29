@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
     def __init__(self, username, email):
         super().__init__()
         self.setWindowTitle("Lachmann Invoice Generator")
-        self.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
         [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         self.profile_pic.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.profile_pic.setFixedSize(75, 75)
         self.sideTopLayout.addWidget(self.profile_pic, 0, 0, 3, 3, Qt.AlignLeft | Qt.AlignBottom)
-        self.setRoundedProfilePic("src/assets/pictures/AqualabLogo.jpg")
+        self.setRoundedProfilePic(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg"))
 
 
     def createLabels(self): # Etiquetas responsivas y adaptables según el tamaño de la ventana
@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
         self.total_label = label.create_label("Total de ventas", font="Archivo Medium", style="medium_black", font_size=16)
         self.dashboardMidLayout.addWidget(self.total_label, 1, 1, Qt.AlignRight)
 
-        self.money = label.create_label(str(f"${s.get_total_amount_invoices()}"), font="Archivo Medium", style="money", font_size=24)
+        self.money = label.create_label(str(f"${s.get_total_amount_invoices():.2f}"), font="Archivo Medium", style="money", font_size=24)
         self.dashboardMidLayout.addWidget(self.money, 2, 1, Qt.AlignRight | Qt.AlignBottom)
 
         # Gráfico de resumen de clientes, productos y facturas
@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
             set_pie_series(self.series, counts)
         
         def update_money_label(self): #Actualiza el dinero recaudado en las facturas al regresar al menú principal
-            self.money.setText(str(f"${s.get_total_amount_invoices()}"))
+            self.money.setText(str(f"${s.get_total_amount_invoices():.2f}"))
 
         # Llamar a update_dashboard_chart al mostrar/ocultar frames relevantes
         self.update_dashboard_chart = update_dashboard_chart.__get__(self)
@@ -231,23 +231,23 @@ class MainWindow(QMainWindow):
         self.sideMidTopLayout.addWidget(self.separador, 4, 0)
 
         # BOTONES DEL DASHBOARD
-        self.btn_facturas = button.create_button("Facturas", icon_path="src/assets/icons/Clipboard.png")
+        self.btn_facturas = button.create_button("Facturas", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Clipboard.png"))
         self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
         self.btn_facturas.clicked.connect(self.toggle_create_invoices_frame)
 
-        self.btn_clientes = button.create_button("Clientes", icon_path="src/assets/icons/Briefcase.png")
+        self.btn_clientes = button.create_button("Clientes", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Briefcase.png"))
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
         self.btn_clientes.clicked.connect(self.toggle_client_frame)
 
-        self.btn_productos = button.create_button("Productos y servicios", icon_path="src/assets/icons/dollarSign.png")
+        self.btn_productos = button.create_button("Productos y servicios", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/dollarSign.png"))
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
         self.btn_productos.clicked.connect(self.toggle_products_frame)
 
-        self.btn_salir = button.create_button("Salir", style="exit", icon_path="src/assets/icons/Xsquare.png")
+        self.btn_salir = button.create_button("Salir", style="exit", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Xsquare.png"))
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
         self.btn_salir.clicked.connect(self.close_window)
 
-        self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size = (75, 75))
+        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size = (75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
@@ -261,7 +261,7 @@ class MainWindow(QMainWindow):
 
         if not hasattr(self, back_button_attr):
             button = ButtonFactory()
-            back_button = button.create_button("Volver", "back", "src/assets/icons/black-arrow-back.png", 14, (90, 45), Qt.AlignLeft)
+            back_button = button.create_button("Volver", "back", os.path.join(os.path.dirname(__file__), "../assets/icons/black-arrow-back.png"), 14, (90, 45), Qt.AlignLeft)
             back_button.clicked.connect(toggle_method)
             back_button.setShortcut("Esc")
             setattr(self, back_button_attr, back_button)
@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
                 btn = getattr(self, btn_attr)
                 if btn.isVisible():
                    btn.setVisible(False)
-
+        
         self.toggle_frame('invoicesMgmtFrame', InvoiceMgmt, 'invoicesMgmtBackButton', self.toggle_invoices_mgmt_frame, dashboard_elements)
     
     def onResize(self, event): # Este evento ajusta el tamaño de los widgets, botones y etiquetas según la resolución de la ventana
@@ -399,39 +399,47 @@ class MainWindow(QMainWindow):
         label = LabelFactory()
 
         # Método que alterna entre mostrar y ocultar las últimas facturas
-        if hasattr(self, 'ventasWidget') and self.ventasWidget.isVisible():
-            # Si las facturas están visibles, ocultarlas y mostrar los botones originales
-            self.ventasWidget.setVisible(False)
-            self.sideMidTopLayout.removeWidget(self.ventasWidget)
-            for i in range(self.sideMidTopLayout.count()):
-                widget = self.sideMidTopLayout.itemAt(i).widget()
-                if widget and widget != self.btn_ventas:
-                    widget.show()
 
+        #Evaluar si existen facturas en la base de datos, si no existen, saltará un mensaje
+        if not s.get_last_facturas():
+            q = MsgBoxFactory()
+            q.create_msg_box("warning", "Advertencia", "No hay facturas registradas.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole).exec()
+            return
+        
         else:
-            # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
-            for i in range(self.sideMidTopLayout.count()):
-                widget = self.sideMidTopLayout.itemAt(i).widget()
-                if widget and widget != self.btn_ventas:
-                    widget.hide()
+            if hasattr(self, 'ventasWidget') and self.ventasWidget.isVisible():
+                # Si las facturas están visibles, ocultarlas y mostrar los botones originales
+                self.ventasWidget.setVisible(False)
+                self.sideMidTopLayout.removeWidget(self.ventasWidget)
+                for i in range(self.sideMidTopLayout.count()):
+                    widget = self.sideMidTopLayout.itemAt(i).widget()
+                    if widget and widget != self.btn_ventas:
+                        widget.show()
 
-            if not hasattr(self, 'ventasWidget'):
-                # Crear un nuevo widget para mostrar las facturas si no existe
-                self.ventasWidget = QWidget()
-                self.ventasLayout = QVBoxLayout(self.ventasWidget)
-                self.ventasLayout.setContentsMargins(0, 0, 0, 0)
-                self.ventasLayout.setAlignment(Qt.AlignCenter)
-                self.ventasLayout.setSpacing(50)
-                self.sideMidTopLayout.addWidget(self.ventasWidget, 1, 0, Qt.AlignCenter)
+            else:
+                # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
+                for i in range(self.sideMidTopLayout.count()):
+                    widget = self.sideMidTopLayout.itemAt(i).widget()
+                    if widget and widget != self.btn_ventas:
+                        widget.hide()
 
-                facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
+                if not hasattr(self, 'ventasWidget'):
+                    # Crear un nuevo widget para mostrar las facturas si no existe
+                    self.ventasWidget = QWidget()
+                    self.ventasLayout = QVBoxLayout(self.ventasWidget)
+                    self.ventasLayout.setContentsMargins(0, 0, 0, 0)
+                    self.ventasLayout.setAlignment(Qt.AlignCenter)
+                    self.ventasLayout.setSpacing(50)
+                    self.sideMidTopLayout.addWidget(self.ventasWidget, 1, 0, Qt.AlignCenter)
 
-                # Mostrar las facturas en etiquetas
-                for factura in facturas:
-                    factura_label = label.create_label(f"{factura[0]}: {factura[1]}", "Archivo Medium", "medium_white", 12)
-                    self.ventasLayout.addWidget(factura_label, Qt.AlignCenter | Qt.AlignTop)
-            self.sideMidTopLayout.addWidget(self.ventasWidget)
-            self.ventasWidget.setVisible(True)
+                    facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
+
+                    # Mostrar las facturas en etiquetas
+                    for factura in facturas:
+                        factura_label = label.create_label(f"{factura[0]}: {factura[1]}", "Archivo Medium", "medium_white", 12)
+                        self.ventasLayout.addWidget(factura_label, Qt.AlignCenter | Qt.AlignTop)
+                self.sideMidTopLayout.addWidget(self.ventasWidget)
+                self.ventasWidget.setVisible(True)
             
     def initDateTime(self): # Función para mostrar la fecha actual
         now = datetime.now()

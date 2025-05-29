@@ -11,6 +11,7 @@ from styles.lists import apply_table_style
 from export import Export
 from service import s
 import polars as pl
+import os
 
 class Product(QWidget):
     def __init__(self, parent=None):
@@ -48,22 +49,22 @@ class Product(QWidget):
         self.buttonLayout.setAlignment(Qt.AlignBottom)
         self.productLayout.addLayout(self.buttonLayout)
 
-        self.btn_settings = button.create_button("", "default_black", "src/assets/icons/settings.png", min_size=(75, 75))
+        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size=(75, 75))
         self.headerLayout.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
         
-        self.btn_add = button.create_button("", "default_black", "src/assets/icons/Icon.png", min_size=(75, 75))
+        self.btn_add = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Icon.png"), min_size=(75, 75))
         self.btn_add.clicked.connect(self.add_product)
         self.buttonLayout.addWidget(self.btn_add, 4, 3, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        self.btn_edit = button.create_button("", "default_black", "src/assets/icons/Pen.png", min_size=(75, 75))
+        self.btn_edit = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Pen.png"), min_size=(75, 75))
         self.btn_edit.clicked.connect(self.edit_product)
         self.buttonLayout.addWidget(self.btn_edit, 4, 4, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        self.btn_delete = button.create_button("", "default_black", "src/assets/icons/Trash.png", min_size=(75, 75))
+        self.btn_delete = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Trash.png"), min_size=(75, 75))
         self.btn_delete.clicked.connect(self.delete_product)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
-        self.btn_export = button.create_button("", "default_black", "src/assets/icons/excel.png", min_size=(75, 75))
+        self.btn_export = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/excel.png"), min_size=(75, 75))
         self.btn_export.clicked.connect(self.export)
         self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
 
@@ -105,7 +106,7 @@ class Product(QWidget):
         for i in range(self.product_table.rowCount()):
             price_item = self.product_table.item(i, 2)
             if price_item:
-                price_item.setText(f"${{price_item.text()}}")
+                price_item.setText(f"${price_item.text()}")
     
         self.listLayout.addWidget(self.product_table)
         self.product_table.itemDoubleClicked.connect(lambda _: self.show_details())
@@ -130,7 +131,7 @@ class Product(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar producto")
-        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -169,7 +170,10 @@ class Product(QWidget):
             ]
             values = [field.text() for _, field in fields_values]
             if any(val.strip() == "" for val in values):
-                print("No se puede introducir un campo vacío.")
+                msgbox = MsgBoxFactory()
+                q = msgbox.create_msg_box("error", "Advertencia", "No se puede introducir un campo vacío.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q.exec()
+                return
             else:
                 try:
                     msgbox = MsgBoxFactory()
@@ -193,7 +197,7 @@ class Product(QWidget):
                     for i in range(self.product_table.rowCount()):
                         price_item = self.product_table.item(i, 2)
                         if price_item:
-                            price_item.setText(f"${{price_item.text()}}")
+                            price_item.setText(f"${price_item.text()}")
                 except Exception as e:
                     print("Error al insertar el producto:", e)
         def close():
@@ -252,7 +256,7 @@ class Product(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Editar producto")
-        self.w.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -329,7 +333,7 @@ class Product(QWidget):
                 for i in range(self.product_table.rowCount()):
                     price_item = self.product_table.item(i, 2)
                     if price_item:
-                        price_item.setText(f"${{price_item.text()}}")
+                        price_item.setText(f"${price_item.text()}")
             except Exception as e:
                 print("Error al editar el producto:", e)
 

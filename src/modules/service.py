@@ -9,13 +9,13 @@ import sqlite3 as sql, os, sys
 class Service: # Clase que realiza la conexión a la DB
     def __init__(self):
         try:
-            db_path = os.path.abspath("src/modules/db/database.db")
+          #db_path = os.path.abspath("src/modules/db")
 
-            db_dir = os.path.dirname(db_path)
+            db_dir = os.path.dirname(__file__) + "/../modules/db"
             if not os.path.exists(db_dir):
                 os.makedirs(db_dir)
             
-            self.conn = sql.connect(db_path)
+            self.conn = sql.connect(db_dir + "/database.db")
             self.cur = self.conn.cursor()
             print("Conexión a la base de datos establecida correctamente.")
         

@@ -19,7 +19,7 @@ class Export:
 
         # Crear una ventana padre temporal con el ícono
         parent = QWidget()
-        parent.setWindowIcon(QIcon("src/assets/pictures/AqualabLogo.jpg"))
+        parent.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
         parent.setWindowTitle("Exportar")
         parent.setAttribute(Qt.WA_DeleteOnClose)
         parent.hide()  # No mostrar la ventana, solo usarla como parent
