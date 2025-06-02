@@ -68,9 +68,6 @@ python .
 ```
 
 Or just download de .exe file on Releases. :)
----
 
-### TODOs
-- Remove unnecessary dependencies in requirements.txt
-- Improve documentation and add usage examples
-- Add FAQ section
+## Buy me a coffee:
+- Binance Pay: yhoxrossell508@gmail.com (USDT only) 
