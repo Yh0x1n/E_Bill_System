@@ -89,7 +89,19 @@ class HelpWindow(QMainWindow):
                 'actions': [
                     ('Acción', 'Haz clic en el botón de exportación en cualquiera de los módulos de gestión para convertir la lista en una hoja de cálculo en formato Excel'),
                 ]
+            },
+            {
+                'title': 'Ajustes',
+                'desc' : 'Establece la información de la empresa proveedora de las facturas, así como gestionar a los usuarios que utilizan el sistema.',
+                'imgs' : [
+                    'src/assets/screenshots/Ajustes.png'
+                ],
+                'actions': [
+                    ('Información de la empresa', 'Puedes "Mostrar" o "Editar" la información del proveedor, completando los campos requeridos para que los datos de tu empresa aparezcan en las facturas.'),
+                    ('Gestión de usuarios', 'Edita o elimina usuarios que tendrán acceso al sistema.'),
+                ]
             }
+
         ]
         
         # Convertir rutas relativas a absolutas para las imágenes
