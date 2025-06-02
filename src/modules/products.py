@@ -114,7 +114,14 @@ class Product(QWidget):
 
         # Apply styles to the product table
         apply_table_style(self.product_table)
-    
+        self.product_table.keyPressEvent = self._product_table_key_press_event
+
+    def _product_table_key_press_event(self, event):
+        if event.key() == Qt.Key_Delete:
+            self.delete_product()
+        else:
+            super(QTableWidget, self.product_table).keyPressEvent(event)
+
     def add_product(self):
         label = LabelFactory()
         button = ButtonFactory()

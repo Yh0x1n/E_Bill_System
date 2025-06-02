@@ -98,10 +98,17 @@ class Client(QWidget):
         self.client_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.listLayout.addWidget(self.client_table)
         self.client_table.itemDoubleClicked.connect(lambda _: self.show_details())
+        self.client_table.keyPressEvent = self._client_table_key_press_event
 
         # Apply styles to the client table
         apply_table_style(self.client_table)
-    
+
+    def _client_table_key_press_event(self, event):
+        if event.key() == Qt.Key_Delete:
+            self.delete_client()
+        else:
+            super(QTableWidget, self.client_table).keyPressEvent(event)
+
     def add_client(self):
         label = LabelFactory()
         button = ButtonFactory()

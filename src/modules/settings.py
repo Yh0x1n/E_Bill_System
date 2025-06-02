@@ -109,6 +109,13 @@ class SettingsWindow(QWidget):
 
         # Apply styles to the user table
         apply_table_style(self.user_table)
+        self.user_table.keyPressEvent = self._user_table_key_press_event
+
+    def _user_table_key_press_event(self, event):
+        if event.key() == Qt.Key_Delete:
+            self.delete_user()
+        else:
+            super(QTableWidget, self.user_table).keyPressEvent(event)
 
     def edit_user(self):
         from service import s

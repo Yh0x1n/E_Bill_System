@@ -110,9 +110,17 @@ class InvoiceMgmt(QWidget):
         self.listLayout.addWidget(self.invoice_table)
         self.invoice_table.itemDoubleClicked.connect(lambda _: self.show_details())
         
+        self.invoice_table.keyPressEvent = self._invoice_table_key_press_event
+        
         apply_table_style(self.invoice_table)
         
         self.update_list_on_change()
+
+    def _invoice_table_key_press_event(self, event):
+        if event.key() == Qt.Key_Delete:
+            self.delete_invoice()
+        else:
+            super(QTableWidget, self.invoice_table).keyPressEvent(event)
 
     def delete_invoice(self):
         msgbox = MsgBoxFactory()

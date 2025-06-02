@@ -5,7 +5,7 @@ a = Analysis(
     ['src\\modules\\__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[('src/assets', 'assets'), ('src/modules/db', 'modules/db')],
+    datas=[('src/assets/fonts', 'assets/fonts'), ('src/assets/icons', 'assets/icons'), ('src/assets/pictures', 'assets/pictures'), ('src/assets/screenshots', 'assets/screenshots'), ('src/modules/db/', 'modules/db')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,5 +35,4 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['src\\assets\\pictures\\AqualabLogo.jpg'],
 )
