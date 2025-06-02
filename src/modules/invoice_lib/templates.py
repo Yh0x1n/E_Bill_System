@@ -11,7 +11,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, Spacer
 
 from invoice_lib.components import SimpleTable, TableWithHeader, PaidStamp
 from invoice_lib.models import PDFInfo, Item, Transaction, InvoiceInfo, ServiceProviderInfo, ClientInfo
+from resource_util import resource_path
 
+import os
 
 class SimpleInvoice(SimpleDocTemplate):
     default_pdf_info = PDFInfo(title='Factura', author='RossTech Solutions', subject='Factura')
@@ -330,32 +332,15 @@ class SimpleInvoice(SimpleDocTemplate):
 
     def finish(self):
         self._story = []
-
         self._build_invoice_info()
         self._build_service_provider_and_client_info()
         self._build_items()
         self._build_transactions()
         self._build_bottom_tip()
-
+        # Usar resource_path para la imagen del logo
+        logo_path = resource_path("assets/pictures/AqualabLogo.jpg")
+        self.add_image(logo_path, 50, 50)
         kwargs = {}
         if self.is_paid:
             kwargs['onFirstPage'] = PaidStamp(7 * inch, 5.8 * inch)
-
-        self.build(self._story, **kwargs)
-
-    def finish(self):
-        self._story = []
-
-        self._build_invoice_info()
-        self._build_service_provider_and_client_info()
-        self._build_items()
-        self._build_transactions()
-        self._build_bottom_tip()
-
-        self.add_image("src/assets/pictures/AqualabLogo.jpg", 50, 50)
-
-        kwargs = {}
-        if self.is_paid:
-            kwargs['onFirstPage'] = PaidStamp(7 * inch, 5.8 * inch)
-
         self.build(self._story, **kwargs)

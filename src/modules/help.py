@@ -4,19 +4,23 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QScrollArea, QMainWi
 from PySide6.QtGui import QPixmap, QFont, QIcon
 from PySide6.QtCore import Qt
 import os
+from resource_util import resource_path
+from styles.buttons import ButtonFactory
 
 class HelpWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Lanchmann - Ayuda y Guía al Usuario")
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.setMinimumSize(900, 700)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         self.setStyleSheet("background-color: white;")
         
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
+        
         content = QWidget()
+        
         layout = QVBoxLayout(content)
         layout.setAlignment(Qt.AlignTop)
         
@@ -73,7 +77,7 @@ class HelpWindow(QMainWindow):
                 'actions': [
                     ('Generar factura', 'Completa los campos requeridos y presiona el botón correspondiente para crear una nueva factura.'),
                     ('Gestionar facturas', 'Accede a la lista de facturas generadas para ver, editar o eliminar registros.'),
-                    ('Mostrar detalles', 'Haz doble clic sobre una factura para ver toda la información asociada.'),
+                    ('Mostrar detalles', 'Haz doble clic sobre una factura para ver la información relevante asociada, o presiona el botón "abrir" para visualizar el archivo de la factura en formato PDF por medio de tu visor predeterminado.'),
                 ]
             },
             {
@@ -90,7 +94,7 @@ class HelpWindow(QMainWindow):
         
         # Convertir rutas relativas a absolutas para las imágenes
         for section in sections:
-            section['imgs'] = [os.path.join(os.path.dirname(__file__), "../assets/" + img_path.split("assets/")[-1]) for img_path in section['imgs']]
+            section['imgs'] = [resource_path("assets/" + img_path.split("assets/")[-1]) for img_path in section['imgs']]
         
         for section in sections:
             title = QLabel(section['title'])
@@ -117,10 +121,32 @@ class HelpWindow(QMainWindow):
                     layout.addWidget(img_label)
             layout.addSpacing(20)
         
-        close_btn = QPushButton("Cerrar")
-        close_btn.setFixedWidth(120)
+        close_btn = ButtonFactory().create_button("Cerrar", style="accept", font_size=14, min_size=(120, 40))
         close_btn.clicked.connect(self.close)
         layout.addWidget(close_btn, alignment=Qt.AlignCenter)
+        
+        # Estilo para la scrollbar
+        scroll.setStyleSheet("""
+                    QScrollBar:vertical {
+                    border: none;
+                    background: #f1f1f1;
+                    width: 12px;
+                    margin: 0px 0px 0px 0px;
+                    border-radius: 6px;
+                }
+                QScrollBar::handle:vertical {
+                    background: #b0b0b0;
+                    min-height: 20px;
+                    border-radius: 6px;
+                }
+                QScrollBar::handle:vertical:hover {
+                    background: #a0a0a0;
+                }
+                QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                    height: 0px;
+                    subcontrol-origin: margin;
+                }
+        """)
         
         scroll.setWidget(content)
         self.setCentralWidget(scroll)

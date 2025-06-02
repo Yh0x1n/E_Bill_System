@@ -145,7 +145,6 @@ class Service: # Clase que realiza la conexión a la DB
             print("Error al insertar el producto:", e)
 
     def edit_product(self, product_id, nombre, precio, descripcion):
-        #TO-DO: ACTUALIZAR ESTE MÉTODO
         fields = {
             "nombre": nombre,
             "precio": precio,
@@ -204,7 +203,6 @@ class Service: # Clase que realiza la conexión a la DB
         return self.cur.fetchall()
 
     def edit_user(self, user_id, username, email):
-        #TO-DO: ACTUALIZAR ESTE MÉTODO
         fields = {
             "username": username,
             "email": email

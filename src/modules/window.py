@@ -11,13 +11,14 @@ from datetime import datetime
 from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
-import os, sys
+import os, sys, tempfile
+from resource_util import resource_path
 
 class MainWindow(QMainWindow):
     def __init__(self, username, email):
         super().__init__()
         self.setWindowTitle("Lachmann Invoice Generator")
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.resize(1024, 600)
         self.setMinimumSize(1024, 600)
         [method() for method in (self.initUI, self.initDateTime, lambda: self.initUser(username, email))]
@@ -92,7 +93,7 @@ class MainWindow(QMainWindow):
         self.profile_pic.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.profile_pic.setFixedSize(75, 75)
         self.sideTopLayout.addWidget(self.profile_pic, 0, 0, 3, 3, Qt.AlignLeft | Qt.AlignBottom)
-        self.setRoundedProfilePic(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg"))
+        self.setRoundedProfilePic(resource_path("assets/pictures/AqualabLogo.jpg"))
 
 
     def createLabels(self): # Etiquetas responsivas y adaptables según el tamaño de la ventana
@@ -231,23 +232,23 @@ class MainWindow(QMainWindow):
         self.sideMidTopLayout.addWidget(self.separador, 4, 0)
 
         # BOTONES DEL DASHBOARD
-        self.btn_facturas = button.create_button("Facturas", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Clipboard.png"))
+        self.btn_facturas = button.create_button("Facturas", icon_path=resource_path("assets/icons/Clipboard.png"))
         self.buttonLayout.addWidget(self.btn_facturas, 0, 0)
         self.btn_facturas.clicked.connect(self.toggle_create_invoices_frame)
 
-        self.btn_clientes = button.create_button("Clientes", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Briefcase.png"))
+        self.btn_clientes = button.create_button("Clientes", icon_path=resource_path("assets/icons/Briefcase.png"))
         self.buttonLayout.addWidget(self.btn_clientes, 0, 1)
         self.btn_clientes.clicked.connect(self.toggle_client_frame)
 
-        self.btn_productos = button.create_button("Productos y servicios", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/dollarSign.png"))
+        self.btn_productos = button.create_button("Productos y servicios", icon_path=resource_path("assets/icons/dollarSign.png"))
         self.buttonLayout.addWidget(self.btn_productos, 1, 0)
         self.btn_productos.clicked.connect(self.toggle_products_frame)
 
-        self.btn_salir = button.create_button("Salir", style="exit", icon_path=os.path.join(os.path.dirname(__file__), "../assets/icons/Xsquare.png"))
+        self.btn_salir = button.create_button("Salir", style="exit", icon_path=resource_path("assets/icons/Xsquare.png"))
         self.buttonLayout.addWidget(self.btn_salir, 1, 1)
         self.btn_salir.clicked.connect(self.close_window)
 
-        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size = (75, 75))
+        self.btn_settings = button.create_button("", "default_black", resource_path("assets/icons/settings.png"), min_size = (75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.dashboardHeader.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
@@ -261,7 +262,7 @@ class MainWindow(QMainWindow):
 
         if not hasattr(self, back_button_attr):
             button = ButtonFactory()
-            back_button = button.create_button("Volver", "back", os.path.join(os.path.dirname(__file__), "../assets/icons/black-arrow-back.png"), 14, (90, 45), Qt.AlignLeft)
+            back_button = button.create_button("Volver", "back", resource_path("assets/icons/black-arrow-back.png"), 14, (90, 45), Qt.AlignLeft)
             back_button.clicked.connect(toggle_method)
             back_button.setShortcut("Esc")
             setattr(self, back_button_attr, back_button)
@@ -363,7 +364,7 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def setRoundedProfilePic(self, image_path):
-        pixmap = QPixmap(image_path).scaled(75, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        pixmap = QPixmap(resource_path(image_path) if not os.path.isabs(image_path) else image_path).scaled(75, 75, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         mask = QPixmap(pixmap.size())
         mask.fill(Qt.transparent)
 
@@ -396,16 +397,14 @@ class MainWindow(QMainWindow):
             self.login_window.show()
 
     def display_ventas(self):
-        label = LabelFactory()
-
         # Método que alterna entre mostrar y ocultar las últimas facturas
+        button = ButtonFactory()
 
-        #Evaluar si existen facturas en la base de datos, si no existen, saltará un mensaje
+        # Evaluar si existen facturas en la base de datos, si no existen, saltará un mensaje
         if not s.get_last_facturas():
             q = MsgBoxFactory()
             q.create_msg_box("warning", "Advertencia", "No hay facturas registradas.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole).exec()
             return
-        
         else:
             if hasattr(self, 'ventasWidget') and self.ventasWidget.isVisible():
                 # Si las facturas están visibles, ocultarlas y mostrar los botones originales
@@ -415,7 +414,6 @@ class MainWindow(QMainWindow):
                     widget = self.sideMidTopLayout.itemAt(i).widget()
                     if widget and widget != self.btn_ventas:
                         widget.show()
-
             else:
                 # Si las facturas no están visibles, ocultar los botones originales excepto el botón de ventas
                 for i in range(self.sideMidTopLayout.count()):
@@ -434,13 +432,42 @@ class MainWindow(QMainWindow):
 
                     facturas = s.get_last_facturas()[:5]  # Obtener las últimas 5 facturas
 
-                    # Mostrar las facturas en etiquetas
+                    # Mostrar las facturas como botones
                     for factura in facturas:
-                        factura_label = label.create_label(f"{factura[0]}: {factura[1]}", "Archivo Medium", "medium_white", 12)
-                        self.ventasLayout.addWidget(factura_label, Qt.AlignCenter | Qt.AlignTop)
+                        factura_id, cliente = factura[0], factura[1]
+                        factura_btn = button.create_button(f"{factura_id}: {cliente}", style="sales", font_size=12, min_size=(200, 40))
+                        factura_btn.setStyleSheet(factura_btn.styleSheet() + "QPushButton{margin: 10px; text-align: center;}")
+                        factura_btn.clicked.connect(lambda _, fid=factura_id: self.mostrar_factura_db(fid))
+                        self.ventasLayout.addWidget(factura_btn, Qt.AlignTop | Qt.AlignCenter)
                 self.sideMidTopLayout.addWidget(self.ventasWidget)
                 self.ventasWidget.setVisible(True)
-            
+
+    def mostrar_factura_db(self, factura_id):
+        # Extrae el PDF de la base de datos y lo abre con el visor predeterminado
+        result = s.cur.execute("""
+            SELECT comprobante FROM facturas WHERE id_factura = ?
+        """, (factura_id,)).fetchone()
+        
+        if not result or not result[0]:
+            MsgBoxFactory().create_msg_box("error", "Error", "No se encontró el PDF de la factura.", QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole).exec()
+            return
+        
+        pdf_data = result[0]
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{factura_id}.pdf") as tmp:
+            tmp.write(pdf_data)
+            tmp_path = tmp.name
+        
+        # Abrir el PDF con el visor predeterminado del sistema
+        if sys.platform.startswith('win'):
+            os.startfile(tmp_path)
+        
+        elif sys.platform.startswith('darwin'):
+            os.system(f'open "{tmp_path}"')
+        
+        else:
+            os.system(f'xdg-open "{tmp_path}"')
+    
     def initDateTime(self): # Función para mostrar la fecha actual
         now = datetime.now()
         self.date_label.setText(now.strftime("%d/%m/%Y"))

@@ -7,9 +7,19 @@ from login import LoginWindow
 import os, sys
 import traceback
 
+# Utilidad para obtener la ruta absoluta de recursos (compatible con PyInstaller y desarrollo)
+def resource_path(relative_path):
+    """Obtiene la ruta absoluta al recurso, compatible con PyInstaller y desarrollo."""
+    try:
+        # PyInstaller crea una carpeta temporal y almacena el path en _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.join(base_path, relative_path)
+
 # Ajuste para registrar las fuentes y configurarlas globalmente
 def load_fonts():
-    font_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../assets/fonts"))
+    font_dir = resource_path("assets/fonts")
     fonts = [
         "Archivo-Black.ttf",
         "Archivo-Bold.ttf",
@@ -23,6 +33,7 @@ def load_fonts():
         font_path = os.path.join(font_dir, font)
         print(f"Intentando cargar la fuente: {font_path}")
         if os.path.exists(font_path):
+            
             try:
                 font_id = QFontDatabase.addApplicationFont(font_path)
                 if font_id == -1:

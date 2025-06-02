@@ -11,13 +11,14 @@ from service import s
 from styles.msg_boxes import MsgBoxFactory
 from styles.buttons import ButtonFactory
 from window import MainWindow
+from resource_util import resource_path
 
 class LoginWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Lanchmann - Inicio de sesión")
-        self.setWindowIcon(QIcon(os.path.dirname(__file__) + "/../assets/pictures/AqualabLogo.jpg"))
+        self.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.setFixedSize(640, 480)
         self.setStyleSheet("""background-color: white;""")
         for init_method in (self.initUI, self.initLabels, self.initButtons, self.check_login): #Inicialización de métodos
@@ -41,7 +42,7 @@ class LoginWindow(QMainWindow):
     
     def initLabels(self): #Creación de los labels
         self.profile_photo = QLabel()
-        pixmap = QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")).pixmap(100, 100)
+        pixmap = QIcon(resource_path("assets/pictures/AqualabLogo.jpg")).pixmap(100, 100)
         circular_pixmap = QPixmap(100, 100)
         circular_pixmap.fill(Qt.transparent)
         painter = QPainter(circular_pixmap)
@@ -182,7 +183,21 @@ class LoginWindow(QMainWindow):
         if result:
             self.close()
             username, email = result[1], result[2]  # Extrae el usuario y el correo electrónico del resultado de la consulta
+            user_id = result[0]  # ID del usuario
             self.main_window = MainWindow(username, email)
+
+            # --- INTEGRACIÓN SettingsWindow: set_current_user ---
+            if hasattr(self.main_window, 'open_settings'):
+                # Si el MainWindow tiene método open_settings, lo envolvemos para pasar el usuario
+                original_open_settings = self.main_window.open_settings
+                def open_settings_with_user():
+                    from settings import SettingsWindow
+                    self.main_window.settings_window = SettingsWindow()
+                    self.main_window.settings_window.set_current_user(user_id=user_id, username=username)
+                    self.main_window.settings_window.show()
+                
+                self.main_window.open_settings = open_settings_with_user
+            
             self.main_window.show()
         else:
             error_msg = msg.create_msg_box("warning", "Error", "Usuario o contraseña incorrectos.", QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)

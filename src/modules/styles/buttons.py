@@ -5,6 +5,8 @@ Módulo que administra el aspecto y creación de los botones.
 from PySide6.QtWidgets import QPushButton, QHBoxLayout, QLabel, QSizePolicy
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt
+from resource_util import resource_path
+import os
 
 class ButtonFactory(QPushButton, QLabel):
     def __init__(self):
@@ -118,7 +120,7 @@ class ButtonFactory(QPushButton, QLabel):
 
         if icon_path:
             icon_label = QLabel(button)
-            icon_label.setPixmap(QIcon(icon_path).pixmap(50, 50))
+            icon_label.setPixmap(QIcon(resource_path(icon_path) if not os.path.isabs(icon_path) else icon_path).pixmap(50, 50))
             icon_label.setStyleSheet("background: transparent;")
             button.setLayout(QHBoxLayout())
             button.layout().addWidget(icon_label, 0, icon_position)

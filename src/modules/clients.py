@@ -11,6 +11,7 @@ from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
 from service import s
+from resource_util import resource_path
 import polars as pl
 import os.path
 
@@ -44,35 +45,27 @@ class Client(QWidget):
 
     def initButtons(self): #Inicio de los botones
         button = ButtonFactory()
-
         self.buttonLayout = QGridLayout()
         self.buttonLayout.setContentsMargins(0, 100, 0, 0)
         self.buttonLayout.setSpacing(5)
         self.buttonLayout.setAlignment(Qt.AlignBottom)
         self.clientLayout.addLayout(self.buttonLayout)
-
-        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size = (75, 75))
+        self.btn_settings = button.create_button("", "default_black", resource_path("assets/icons/settings.png"), min_size = (75, 75))
         self.headerLayout.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
-        
-        self.btn_add = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Icon.png"), min_size = (75, 75))
+        self.btn_add = button.create_button("", "default_black", resource_path("assets/icons/Icon.png"), min_size = (75, 75))
         self.btn_add.clicked.connect(self.add_client)
         self.buttonLayout.addWidget(self.btn_add, 4, 3, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
-        self.btn_edit = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Pen.png"), min_size = (75, 75))
+        self.btn_edit = button.create_button("", "default_black", resource_path("assets/icons/Pen.png"), min_size = (75, 75))
         self.btn_edit.clicked.connect(self.edit_client)
         self.buttonLayout.addWidget(self.btn_edit, 4, 4, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
-        self.btn_delete = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Trash.png"), min_size = (75, 75))
+        self.btn_delete = button.create_button("", "default_black", resource_path("assets/icons/Trash.png"), min_size = (75, 75))
         self.btn_delete.clicked.connect(self.delete_client)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
-        self.btn_export = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/excel.png"), min_size=(75, 75))
+        self.btn_export = button.create_button("", "default_black", resource_path("assets/icons/excel.png"), min_size=(75, 75))
         self.btn_export.clicked.connect(self.export)
         self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
         description = ["Editar", "Agregar", "Eliminar", "Ajustes", "Exportar a Excel"]
         buttons = [self.btn_edit, self.btn_add, self.btn_delete, self.btn_settings, self.btn_export]
-        
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
 
@@ -126,7 +119,7 @@ class Client(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")
-        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.w.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -249,7 +242,7 @@ class Client(QWidget):
         self.w = QMainWindow()
         self.w.setFixedSize(640, 400)
         self.w.setWindowTitle("Lanchmann - Agregar cliente")
-        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.w.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(20,20,20,20)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)

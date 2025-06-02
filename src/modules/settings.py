@@ -11,6 +11,7 @@ from styles.buttons import ButtonFactory
 from styles.labels import LabelFactory
 from styles.msg_boxes import MsgBoxFactory
 from service import s
+from resource_util import resource_path
 from styles.lists import apply_table_style
 import os
 
@@ -28,7 +29,7 @@ class SettingsWindow(QWidget):
         """
         super().__init__()
         self.setWindowTitle("Ajustes")
-        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.setGeometry(100, 100, 300, 200)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
 
@@ -128,7 +129,7 @@ class SettingsWindow(QWidget):
 
         self.w = QMainWindow()
         self.w.setWindowTitle("Lanchmann - Editar Usuario")
-        self.w.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.w.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.w.setStyleSheet("""background-color: white;""")
         self.w.setContentsMargins(10, 10, 10, 10)
         self.w.setWindowFlags(Qt.WindowCloseButtonHint)
@@ -232,7 +233,76 @@ class SettingsWindow(QWidget):
         self.w.show()
 
     def delete_user(self):
-        pass
+        """
+        Elimina un usuario de la base de datos con validaciones:
+        1. Si solo hay un usuario, muestra advertencia.
+        2. Si se intenta borrar el usuario en sesión, muestra advertencia.
+        3. Si hay más de uno y no es el usuario en sesión, permite borrar.
+        """
+        msgbox = MsgBoxFactory()
+        selected_items = self.user_table.selectedItems()
+        if not selected_items:
+            q = msgbox.create_msg_box(
+                "information", "Información", "Selecciona un usuario a eliminar.",
+                QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+            q.exec()
+            return
+
+        # Obtener el id y nombre del usuario seleccionado
+        row = selected_items[0].row()
+        user_id = self.user_table.item(row, 0).text()
+        username = self.user_table.item(row, 1).text()
+
+        # Contar usuarios en la base de datos
+        s.cur.execute("SELECT COUNT(*) FROM usuario;")
+        user_count = s.cur.fetchone()[0]
+
+        # Obtener usuario en sesión (asumimos que está en self.current_user_id o self.current_username)
+        current_user_id = getattr(self, 'current_user_id', None)
+        current_username = getattr(self, 'current_username', None)
+
+        # 1. Si solo hay un usuario
+        if user_count == 1:
+            q = msgbox.create_msg_box(
+                "warning", "Advertencia", "No se puede eliminar el único usuario registrado.",
+                QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+            q.exec()
+            return
+
+        # 2. Si se intenta borrar el usuario en sesión
+        if (current_user_id and user_id == str(current_user_id)) or (current_username and username == str(current_username)):
+            q = msgbox.create_msg_box(
+                "warning", "Advertencia", "No puedes eliminar el usuario con el que has iniciado sesión.",
+                QMessageBox.Warning, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+            q.exec()
+            return
+
+        # 3. Confirmar eliminación
+        q = msgbox.create_question_box(
+            "question", "Confirmar eliminación",
+            f"¿Estás seguro de que deseas eliminar al usuario '{username}'?",
+            QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
+        q.exec()
+        if q.clickedButton().text() == "Sí":
+            try:
+                s.cur.execute("DELETE FROM usuario WHERE id = ?;", (user_id,))
+                s.conn.commit()
+                q2 = msgbox.create_msg_box(
+                    "information", "Éxito", f"Usuario '{username}' eliminado correctamente.",
+                    QMessageBox.Information, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q2.exec()
+                # Refrescar la tabla
+                df = pl.read_database("SELECT id, username, email FROM usuario;", s.conn)
+                self.user_table.setRowCount(df.height)
+                for i, row in enumerate(df.iter_rows()):
+                    for j, value in enumerate(row):
+                        self.user_table.setItem(i, j, QTableWidgetItem(str(value)))
+            except Exception as e:
+                print("Error al eliminar el usuario:", e)
+                q2 = msgbox.create_msg_box(
+                    "critical", "Error", "No se pudo eliminar el usuario.",
+                    QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole)
+                q2.exec()
 
     def set_provider_info(self):
         """
@@ -255,7 +325,7 @@ class SettingsWindow(QWidget):
 
         self.provider_window = QMainWindow()
         self.provider_window.setWindowTitle("Editar Información del Proveedor")
-        self.provider_window.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), "../assets/pictures/AqualabLogo.jpg")))
+        self.provider_window.setWindowIcon(QIcon(resource_path("assets/pictures/AqualabLogo.jpg")))
         self.provider_window.setStyleSheet("background-color: white;")
         self.provider_window.setWindowFlags(Qt.WindowCloseButtonHint)
 
@@ -363,3 +433,14 @@ class SettingsWindow(QWidget):
 
         msgbox.create_msg_box("information", "Información del Proveedor", info_text, QMessageBox.NoIcon,
                                 "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole).exec()
+
+    def set_current_user(self, user_id=None, username=None):
+        """
+        Método para establecer el usuario en sesión actual.
+        Debe llamarse después del login exitoso.
+        """
+        self.current_user_id = user_id
+        self.current_username = username
+
+    # Ejemplo de uso sugerido (llamar tras login exitoso):
+    # settings_window.set_current_user(user_id=usuario_id, username=usuario_nombre)

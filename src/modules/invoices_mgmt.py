@@ -8,8 +8,9 @@ from styles.msg_boxes import MsgBoxFactory
 from styles.lists import apply_table_style
 from export import Export
 from service import s
+from resource_util import resource_path
 import polars as pl
-import os
+import os, sys, tempfile
 
 class InvoiceMgmt(QWidget):
     def __init__(self, parent=None):
@@ -40,26 +41,23 @@ class InvoiceMgmt(QWidget):
         self.buttonLayout.setSpacing(5)
         self.buttonLayout.setAlignment(Qt.AlignBottom)
         self.invoiceLayout.addLayout(self.buttonLayout)
-
-        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size=(75, 75))
+        self.btn_settings = button.create_button("", "default_black", resource_path("assets/icons/settings.png"), min_size=(75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, 2, 2, Qt.AlignTop | Qt.AlignRight)
-
-        self.btn_delete = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/Trash.png"), min_size=(75, 75))
+        self.btn_delete = button.create_button("", "default_black", resource_path("assets/icons/Trash.png"), min_size=(75, 75))
         self.btn_delete.clicked.connect(self.delete_invoice)
         self.buttonLayout.addWidget(self.btn_delete, 4, 5, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
-        self.btn_export = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/excel.png"), min_size=(75, 75))
+        self.btn_export = button.create_button("", "default_black", resource_path("assets/icons/excel.png"), min_size=(75, 75))
         self.btn_export.clicked.connect(self.export)
         self.buttonLayout.addWidget(self.btn_export, 4, 6, 3, 4, Qt.AlignBottom | Qt.AlignRight)
-
         description = ["Eliminar", "Ajustes", "Exportar a Excel"]
         buttons = [self.btn_delete, self.btn_settings, self.btn_export]
         for i, button in enumerate(buttons):
             button.setToolTip(description[i])
 
     def initList(self):
+        button = ButtonFactory()
         self.listLayout = QVBoxLayout()
         self.listLayout.setAlignment(Qt.AlignBottom)
         self.listLayout.setContentsMargins(0, 0, 0, 0)
@@ -77,8 +75,8 @@ class InvoiceMgmt(QWidget):
         
         self.invoice_table = QTableWidget()
         self.invoice_table.setRowCount(df.height)
-        self.invoice_table.setColumnCount(len(df.columns))
-        self.invoice_table.setHorizontalHeaderLabels(["N°", "Fecha", "Cliente", "Total"])
+        self.invoice_table.setColumnCount(len(df.columns) + 1)
+        self.invoice_table.setHorizontalHeaderLabels(["N°", "Fecha", "Cliente", "Total", ""])
         self.invoice_table.setMinimumSize(600, 200)
         self.invoice_table.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
         self.invoice_table.setFont(QFont("Archivo Medium", 12))
@@ -102,7 +100,13 @@ class InvoiceMgmt(QWidget):
                     total_item.setText(f"${total_value:.2f}")
                 except Exception:
                     pass
-        
+
+            open_btn = button.create_button("Abrir", "default_black", None, font_size=10, min_size=(75, 20))
+            open_btn.setStyleSheet("QPushButton {border-radius: 5px; color: white; background-color: #0071BD; text-align: center; } QPushButton:hover { background-color: darkblue; }")
+            open_btn.clicked.connect(lambda _, row=i: self.mostrar_factura_db(self.invoice_table.item(row, 0).text()))
+
+            self.invoice_table.setCellWidget(i, 4, open_btn)
+
         self.listLayout.addWidget(self.invoice_table)
         self.invoice_table.itemDoubleClicked.connect(lambda _: self.show_details())
         
@@ -186,6 +190,34 @@ class InvoiceMgmt(QWidget):
             QMessageBox.NoIcon, "Archivo Medium", 12, "Volver", QMessageBox.AcceptRole
         )
         msg.exec()
+
+    def mostrar_factura_db(self, factura_id):
+        # Extrae el PDF de la base de datos y lo abre con el visor predeterminado
+        result = s.cur.execute("""
+            SELECT comprobante FROM facturas WHERE id_factura = ?
+        """, (factura_id,)).fetchone()
+
+        if not result or not result[0]:
+            MsgBoxFactory().create_msg_box("error", "Error", "No se encontró el PDF de la factura.",
+                                           QMessageBox.Critical, "Archivo Medium", 12, "Aceptar",
+                                           QMessageBox.AcceptRole).exec()
+            return
+
+        pdf_data = result[0]
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{factura_id}.pdf") as tmp:
+            tmp.write(pdf_data)
+            tmp_path = tmp.name
+
+        # Abrir el PDF con el visor predeterminado del sistema
+        if sys.platform.startswith('win'):
+            os.startfile(tmp_path)
+
+        elif sys.platform.startswith('darwin'):
+            os.system(f'open "{tmp_path}"')
+
+        else:
+            os.system(f'xdg-open "{tmp_path}"')
 
     def export(self):
         Export().export_data("invoices")

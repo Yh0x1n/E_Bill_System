@@ -14,6 +14,7 @@ from invoice_lib.models import ServiceProviderInfo, ClientInfo, InvoiceInfo, Ite
 import random, os
 import polars as pl
 from styles.lists import apply_table_style
+from resource_util import resource_path
 
 class Invoice(QWidget):
     def __init__(self, parent=None):
@@ -48,39 +49,39 @@ class Invoice(QWidget):
 
     def initButtons(self):
         button = ButtonFactory()
-
-        self.btn_settings = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/settings.png"), min_size = (75, 75))
+       
+        self.btn_settings = button.create_button("", "default_black", resource_path("assets/icons/settings.png"), min_size = (75, 75))
         self.btn_settings.setToolTip("Ajustes")
         self.btn_settings.clicked.connect(self.open_settings)
         self.headerLayout.addWidget(self.btn_settings, 0, 3, Qt.AlignTop | Qt.AlignRight)
-
-        self.btn_add_client = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/add_client.png"), min_size=(75, 75))
+        
+        self.btn_add_client = button.create_button("", "default_black", resource_path("assets/icons/add_client.png"), min_size=(75, 75))
         self.btn_add_client.clicked.connect(Client().add_client)
         self.fieldsLayout.addWidget(self.btn_add_client, 1, 1, Qt.AlignLeft)
-
-        self.btn_add_product = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/add_product.png"), min_size=(75, 75))
+        
+        self.btn_add_product = button.create_button("", "default_black", resource_path("assets/icons/add_product.png"), min_size=(75, 75))
         self.btn_add_product.clicked.connect(Product().add_product)
         self.fieldsLayout.addWidget(self.btn_add_product, 1, 2, Qt.AlignLeft)
-
-        self.btn_update_lists = button.create_button("", "default_black", os.path.join(os.path.dirname(__file__), "../assets/icons/update.png"), min_size=(75, 75))
+       
+        self.btn_update_lists = button.create_button("", "default_black", resource_path("assets/icons/update.png"), min_size=(75, 75))
         self.btn_update_lists.clicked.connect(self.update_lists)
         self.fieldsLayout.addWidget(self.btn_update_lists, 1, 3, Qt.AlignLeft)
-
+        
         self.btn_generate_invoice = button.create_button("Generar", "accept", None, 12, (100, 30))
         self.btn_generate_invoice.setStyleSheet(self.btn_generate_invoice.styleSheet() + """QPushButton {border: none; border-radius: 5px;}""")
         self.btn_generate_invoice.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.btn_generate_invoice.clicked.connect(self.generate_invoice)
         self.fieldsLayout.addWidget(self.btn_generate_invoice, 6, 1, 1, 4, Qt.AlignRight)
-
+        
         descriptions = ["Agregar cliente", "Agregar producto", "Actualizar listas"]
         buttons = [self.btn_add_client, self.btn_add_product, self.btn_update_lists]
-
+        
         for i, button in enumerate(buttons):
             button.setToolTip(descriptions[i])
 
     def initFields(self):
-        from service import s
         label = LabelFactory()
+        
         self.fieldsLayout = QGridLayout()
         self.fieldsLayout.setContentsMargins(0, 0, 0, 0)
         self.fieldsLayout.setSpacing(10)
@@ -166,13 +167,16 @@ class Invoice(QWidget):
         self.product_table.setSelectionBehavior(QTableWidget.SelectRows)
         self.product_table.setSelectionMode(QTableWidget.SingleSelection)
         apply_table_style(self.product_table)
+
         for i in range(self.product_table.rowCount()):
             self.product_table.setRowHeight(i, 40)
+
         # Llenar la tabla con datos y agregar checkboxes usando Polars
         for i, row in enumerate(df.iter_rows()):
             for j, value in enumerate(row):
                 item = QTableWidgetItem(str(value))
                 self.product_table.setItem(i, j, item)
+
             checkbox = QCheckBox()
             checkbox.stateChanged.connect(self.update_total_amount)
             checkbox_cell_widget = QWidget()
@@ -180,22 +184,30 @@ class Invoice(QWidget):
             checkbox_cell_layout.setAlignment(Qt.AlignCenter)
             checkbox_cell_layout.setContentsMargins(0, 0, 0, 0)
             checkbox_cell_layout.addWidget(checkbox)
+
             self.product_table.setCellWidget(i, 4, checkbox_cell_widget)
+
             counter_cell_widget = QWidget()
             counter_cell_layout = QHBoxLayout(counter_cell_widget)
             counter_cell_layout.setAlignment(Qt.AlignCenter)
             counter_cell_layout.setContentsMargins(0, 0, 0, 0)
+
             btn_minus = ButtonFactory().create_button("-", "default_black", None, min_size=(10, 10))
             btn_plus = ButtonFactory().create_button("+", "default_black", None, min_size=(10, 10))
             unit_label = l.create_label("1", "Archivo Medium", "medium_black", 12)
+
             btn_minus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(max(0, int(lbl.text()) - 1))), self.update_total_amount()))
             btn_plus.clicked.connect(lambda _, lbl=unit_label: (lbl.setText(str(int(lbl.text()) + 1)), self.update_total_amount()))
+
             counter_cell_layout.addWidget(btn_minus)
             counter_cell_layout.addWidget(unit_label)
             counter_cell_layout.addWidget(btn_plus)
+
             self.product_table.setCellWidget(i, 3, counter_cell_widget)
+
         self.product_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.product_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+
         def handle_table_click(row, col):
             if col == 4:
                 checkbox_cell_widget = self.product_table.cellWidget(row, col)
