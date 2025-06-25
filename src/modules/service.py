@@ -54,7 +54,10 @@ class Service: # Clase que realiza la conexión a la DB
                     cedula TEXT NOT NULL,
                     direccion TEXT NOT NULL,
                     telefono TEXT NOT NULL,
-                    email TEXT NOT NULL
+                    email TEXT NOT NULL,
+                    fiscal_regime TEXT NULL,
+                    tax_responsibility TEXT NULL,
+                    economic_activity TEXT NULL
                 );""") #Tabla "cliente"
             
             self.cur.execute("""
@@ -87,23 +90,26 @@ class Service: # Clase que realiza la conexión a la DB
             sys.exit(1)
 
     #Clientes
-    def insert_client(self, nombre, cedula, dir, tlf, email):
+    def insert_client(self, nombre, cedula, dir, tlf, email, fiscal_regime=None, tax_responsibility=None, economic_activity=None):
         import random
         id_cliente = f"CLI-{str(random.randint(100, 999))}"
-        self.cur.execute("INSERT INTO cliente(id_cliente, nombre_cliente, cedula, direccion, telefono, email) VALUES (?, ?, ?, ?, ?, ?);", (id_cliente, nombre, cedula, dir, tlf, email))
+        self.cur.execute("INSERT INTO cliente(id_cliente, nombre_cliente, cedula, direccion, telefono, email, fiscal_regime, tax_responsibility, economic_activity) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", (id_cliente, nombre, cedula, dir, tlf, email, fiscal_regime, tax_responsibility, economic_activity))
         return self.conn.commit()
 
     def delete_client(self, id_cliente):
         self.cur.execute("DELETE FROM cliente WHERE id_cliente = ?;", (id_cliente,))
         return self.conn.commit()
 
-    def edit_client(self, id_cliente, nombre, cedula, dir, tlf, email):
+    def edit_client(self, id_cliente, nombre, cedula, dir, tlf, email, fiscal_regime=None, tax_responsibility=None, economic_activity=None):
         fields = {
             "nombre_cliente": nombre,
             "cedula": cedula,
             "direccion": dir,
             "telefono": tlf,
-            "email": email
+            "email": email,
+            "fiscal_regime": fiscal_regime,
+            "tax_responsibility": tax_responsibility,
+            "economic_activity": economic_activity
         }
         set_clause = []
         params = {}
@@ -230,6 +236,17 @@ class Service: # Clase que realiza la conexión a la DB
         self.cur.execute("SELECT SUM(total) FROM facturas;")
         total = self.cur.fetchone()[0]
         return total if total is not None else 0.0
+    
+    def get_next_invoice_id(self):
+        self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 1")
+        last = self.cur.fetchone()
+        if last and last[0] and last[0].startswith("FVER-"):
+            try:
+                num = int(last[0].split('-')[1])
+                return f"FVER-{num+1:02d}"
+            except Exception:
+                pass
+        return "FVER-01"
     
     def close(self): #Cierra la conexión
         if self.conn:

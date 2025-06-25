@@ -114,9 +114,20 @@ class SimpleInvoice(SimpleDocTemplate):
 
     def _service_provider_data(self):
         if isinstance(self.service_provider_info, ServiceProviderInfo):
-            props = [('name', 'Nombre'), ('street', 'Dirección'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
-                     ('country', 'País'), ('post_code', 'Código postal'), ('vat_tax_number', 'NIT'),
-                     ('email', 'Correo electrónico'), ('phone_number', "Teléfono")]
+            props = [
+                ('name', 'Nombre'),
+                ('street', 'Dirección'),
+                ('city', 'Ciudad'),
+                ('state', 'Estado/Dpto.'),
+                ('country', 'País'),
+                ('post_code', 'Código postal'),
+                ('vat_tax_number', 'NIT'),
+                ('email', 'Correo electrónico'),
+                ('phone_number', "Teléfono"),
+                ('fiscal_regime', 'Régimen Fiscal'),
+                ('tax_responsibility', 'Responsabilidad Tributaria'),
+                ('economic_activity', 'Actividad Económica')
+            ]
 
             return self._attribute_to_table_data(self.service_provider_info, props)
 
@@ -133,9 +144,25 @@ class SimpleInvoice(SimpleDocTemplate):
         if not isinstance(self.client_info, ClientInfo):
             return []
 
-        props = [('name', 'Nombre'), ('street', 'Dirección'), ('city', 'Ciudad'), ('state', 'Estado/Dpto.'),
-                 ('country', 'País'), ('post_code', 'Código postal'), ('email', 'Correo electrónico'), ('client_id', 'N° Cliente'),
-                 ('vat_tax_number', 'NIT'), ('phone_number', "Teléfono")]
+        props = [
+            ('name', 'Nombre'),
+            ('street', 'Dirección'),
+            ('city', 'Ciudad'),
+            ('state', 'Estado/Dpto.'),
+            ('country', 'País'),
+            ('post_code', 'Código postal'),
+            ('email', 'Correo electrónico'),
+            ('client_id', 'N° Cliente'),
+            ('vat_tax_number', 'NIT'),
+            ('phone_number', "Teléfono")
+        ]
+        # Añadir solo los campos opcionales si tienen valor
+        if getattr(self.client_info, 'fiscal_regime', None):
+            props.append(('fiscal_regime', 'Régimen Fiscal'))
+        if getattr(self.client_info, 'tax_responsibility', None):
+            props.append(('tax_responsibility', 'Responsabilidad Tributaria'))
+        if getattr(self.client_info, 'economic_activity', None):
+            props.append(('economic_activity', 'Actividad Económica'))
         return self._attribute_to_table_data(self.client_info, props)
 
     def _build_client_info(self):

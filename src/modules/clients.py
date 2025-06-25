@@ -153,7 +153,10 @@ class Client(QWidget):
             ("cedula", "Cédula/NIT"),
             ("dir", "Dirección"),
             ("tlf", "Teléfono"),
-            ("email", "Correo electrónico")
+            ("email", "Correo electrónico"),
+            ("fiscal_regime", "Régimen Fiscal (opcional)"),
+            ("tax_responsibility", "Responsabilidad Tributaria (opcional)"),
+            ("economic_activity", "Actividad Económica (opcional)")
         ]
         buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
         # Definir la función command antes de conectar señales
@@ -161,16 +164,19 @@ class Client(QWidget):
             from service import s
             # Obtener los valores de cada campo
             fields_values = [
-            ('nombre', self.nombre_input),
-            ('cedula', self.cedula_input),
-            ('direccion', self.dir_input),
-            ('telefono', self.tlf_input),
-            ('email', self.email_input)
+                ('nombre', self.nombre_input),
+                ('cedula', self.cedula_input),
+                ('direccion', self.dir_input),
+                ('telefono', self.tlf_input),
+                ('email', self.email_input),
+                ('fiscal_regime', self.fiscal_regime_input),
+                ('tax_responsibility', self.tax_responsibility_input),
+                ('economic_activity', self.economic_activity_input)
             ]
-            values = [field.text() for _, field in fields_values]
-            if any(val.strip() == "" for val in values):
+            values = [field.text() if field.text().strip() != '' else None for _, field in fields_values]
+            if any(val is None for val in values[:5]):
                 msgbox = MsgBoxFactory()
-                msgbox.create_msg_box("error", "Error", "Por favor, completa todos los campos.", QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole).exec()
+                msgbox.create_msg_box("error", "Error", "Por favor, completa todos los campos obligatorios.", QMessageBox.Critical, "Archivo Medium", 12, "Aceptar", QMessageBox.AcceptRole).exec()
                 return
             else:
                 try:
@@ -197,19 +203,24 @@ class Client(QWidget):
 
         # Agregar QLineEdit para cada campo usando el texto como placeholder
         for i, (key, text) in enumerate(fields):
-            row = ((i // 2) * 2) + 2  # Empezar en la fila 1, luego filas 1-2, 3-4, etc.
+            row = i // 2 + 2  # 4 filas para campos, empezando en la fila 2
             col = i % 2
 
             field_input = QLineEdit()
             field_input.setStyleSheet(input_stylesheet)
             field_input.setPlaceholderText(text)
 
-            if key == "dir":
-                field_input.setMinimumWidth(275)
-            elif key == "email":
-                field_input.setMinimumWidth(250)
-            elif key == "nombre":
-                field_input.setMinimumWidth(200)
+            match key:
+                case "dir":
+                    field_input.setMinimumWidth(275)
+                case "email":
+                    field_input.setMinimumWidth(250)                
+                case "nombre":
+                    field_input.setMinimumWidth(200)
+                case "tax_responsibility":
+                    field_input.setMinimumWidth(275)
+                case _:
+                    pass
 
             setattr(self, f"{key}_input", field_input)
             self.w_layout.addWidget(getattr(self, f"{key}_input"), row, col, Qt.AlignLeft)
@@ -217,11 +228,12 @@ class Client(QWidget):
             # Conectar la tecla Enter para ejecutar command en cada campo
             field_input.returnPressed.connect(command)
 
+        # Colocar los botones en la fila siguiente a los campos (fila 6)
         for i, (key, text) in enumerate(buttons):
             col = i % 2
             style = "accept" if key == "accept" else "cancel"
             setattr(self, f'btn_{key}', button.create_button(text, style, None, 16, (125, 50)))
-            self.w_layout.addWidget(getattr(self, f'btn_{key}'), 7, col, Qt.AlignCenter)
+            self.w_layout.addWidget(getattr(self, f'btn_{key}'), 6, col, Qt.AlignCenter)
 
         # Vincular la función command al botón "Aceptar"
         self.btn_accept.clicked.connect(command)
@@ -293,7 +305,10 @@ class Client(QWidget):
             ("cedula", cedula),
             ("dir", direccion),
             ("tlf", f"{self.client_table.item(row, 2).text()}"),
-            ("email", f"{self.client_table.item(row, 3).text()}")
+            ("email", f"{self.client_table.item(row, 3).text()}"),
+            ("fiscal_regime", details[6] if len(details) > 6 else ""),
+            ("tax_responsibility", details[7] if len(details) > 7 else ""),
+            ("economic_activity", details[8] if len(details) > 8 else "")
         ]
 
         buttons = [("accept", "Aceptar"), ("cancel", "Cancelar")]
@@ -309,11 +324,13 @@ class Client(QWidget):
                 ('cedula', self.cedula_input),
                 ('direccion', self.dir_input),
                 ('telefono', self.tlf_input),
-                ('email', self.email_input)
+                ('email', self.email_input),
+                ('fiscal_regime', self.fiscal_regime_input),
+                ('tax_responsibility', self.tax_responsibility_input),
+                ('economic_activity', self.economic_activity_input)
             ]
-
-            values = [field.text() for _, field in fields_values]
-            
+            values = [field.text() if field.text().strip() != '' else None for _, field in fields_values]
+            # Solo los primeros 5 campos son obligatorios
             try:
                 q = msgbox.create_question_box("question", "Información", "¿Deseas guardar los cambios?", QMessageBox.Question, "Archivo Medium", 12, ["Sí", "No"], [QMessageBox.AcceptRole, QMessageBox.RejectRole])
                 q.exec()
@@ -352,6 +369,8 @@ class Client(QWidget):
                     field_input.setMinimumWidth(250)
                 case "nombre":
                     field_input.setMinimumWidth(200)
+                case "tax_responsibility":
+                    field_input.setMinimumWidth(275)
                 case _:
                     pass
 
@@ -365,7 +384,7 @@ class Client(QWidget):
             col = i % 2
             style = "accept" if key == "accept" else "cancel"
             setattr(self, f'btn_{key}', button.create_button(text, style, None, 16, (125, 50)))
-            self.w_layout.addWidget(getattr(self, f'btn_{key}'), 7, col, Qt.AlignCenter)
+            self.w_layout.addWidget(getattr(self, f'btn_{key}'), 6, col, Qt.AlignCenter)
 
         # Vincular la función command al botón "Aceptar"
         self.btn_accept.clicked.connect(command)
@@ -419,7 +438,7 @@ class Client(QWidget):
             return
 
         details_text = ""
-        labels = ["ID Cliente", "Nombre", "Cédula/NIT", "Dirección", "Teléfono", "Email"]
+        labels = ["ID Cliente", "Nombre", "Cédula/NIT", "Dirección", "Teléfono", "Email", "Régimen Fiscal", "Responsabilidad Tributaria", "Actividad Económica"]
         for i, detail in enumerate(client_details[0]):
             details_text += f"<b>{labels[i]}:</b> {detail}<br>"
         

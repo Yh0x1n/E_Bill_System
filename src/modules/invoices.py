@@ -343,15 +343,17 @@ class Invoice(QWidget):
                 client_id = self.client_combobox.currentText().split(" - ")[0]
                 product_ids = [self.product_table.item(i, 0).text() for i in range(self.product_table.rowCount()) if self.product_table.cellWidget(i, 4).findChild(QCheckBox).isChecked()]
                 
-                query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula FROM cliente WHERE id_cliente = '{client_id}';"
+                # Traer todos los campos relevantes del cliente
+                query = f"SELECT id_cliente, nombre_cliente, email, direccion, telefono, cedula, fiscal_regime, tax_responsibility, economic_activity FROM cliente WHERE id_cliente = ?;"
                 query2 = f"SELECT id_producto, nombre, precio, descripcion FROM producto WHERE id_producto IN ({', '.join(['?' for _ in product_ids])});"
                 query3 = f"SELECT nombre, nit, direccion, telefono, email from proveedor;"
 
-                client_data = s.cur.execute(query).fetchone()
+                client_data = s.cur.execute(query, (client_id,)).fetchone()
                 product_data = s.cur.execute(query2, product_ids).fetchall()
                 service_provider_data = s.cur.execute(query3).fetchone()
 
-                invoice_id = f"INV-{random.randint(100, 999)}"
+                # Generar el ID de factura secuencial
+                invoice_id = s.get_next_invoice_id()
                 invoice_datetime = now.strftime("%d/%m/%Y")
                 due_datetime = now.strftime("%d/%m/%Y")
 
@@ -368,7 +370,23 @@ class Invoice(QWidget):
                         units = int(unit_label.text()) if unit_label else 1
                         doc.add_item(Item(product[1], product[3], units, float(product[2])))
 
-                doc.client_info = ClientInfo(client_id=client_data[0], name=client_data[1], vat_tax_number=client_data[5], street=client_data[3], phone=client_data[4] , email=client_data[2])
+                # Evaluar y pasar solo los campos opcionales si tienen valor
+                client_kwargs = {
+                    'client_id': client_data[0],
+                    'name': client_data[1],
+                    'email': client_data[2],
+                    'street': client_data[3],
+                    'phone': client_data[4],
+                    'vat_tax_number': client_data[5]
+                }
+                if client_data[6]:
+                    client_kwargs['fiscal_regime'] = client_data[6]
+                if client_data[7]:
+                    client_kwargs['tax_responsibility'] = client_data[7]
+                if client_data[8]:
+                    client_kwargs['economic_activity'] = client_data[8]
+                doc.client_info = ClientInfo(**client_kwargs)
+
                 doc.service_provider_info = ServiceProviderInfo(name=service_provider_data[0], vat_tax_number=service_provider_data[1], street=service_provider_data[2], phone=service_provider_data[3], email=service_provider_data[4])
                 tax = 5
                 doc.set_item_tax_rate(tax)

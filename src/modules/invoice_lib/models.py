@@ -64,7 +64,8 @@ class ServiceProviderInfo(AddressInfo):
     Service provider/Merchant information
     """
     def __init__(self, name=None, street=None, city=None, state=None, country=None, post_code=None,
-                 vat_tax_number=None, email=None, phone=None):
+                 vat_tax_number=None, email=None, phone=None,
+                 fiscal_regime="O-47", tax_responsibility="ZZ - No aplica", economic_activity="4759"):
         """
         :type name: str or unicode or None
         :type street: str or unicode or None
@@ -75,11 +76,17 @@ class ServiceProviderInfo(AddressInfo):
         :type vat_tax_number: str or unicode or int or None
         :type email: str or unicode or None
         :type phone: str or unicode or None
+        :type fiscal_regime: str or unicode or None
+        :type tax_responsibility: str or unicode or None
+        :type economic_activity: str or unicode or None
         """
         super(ServiceProviderInfo, self).__init__(name, street, city, state, country, post_code)
         self.vat_tax_number = vat_tax_number
         self.email = email
         self.phone = phone
+        self.fiscal_regime = fiscal_regime
+        self.tax_responsibility = tax_responsibility
+        self.economic_activity = economic_activity
 
 
 class ClientInfo(AddressInfo):
@@ -87,7 +94,8 @@ class ClientInfo(AddressInfo):
     Client/Custom information
     """
     def __init__(self, name=None, street=None, city=None, state=None, country=None, post_code=None,
-                 email=None, client_id=None, vat_tax_number=None, phone=None):
+                 email=None, client_id=None, vat_tax_number=None, phone=None,
+                 fiscal_regime=None, tax_responsibility=None, economic_activity=None):
         """
         :type name: str or unicode or None
         :type street: str or unicode or None
@@ -96,14 +104,21 @@ class ClientInfo(AddressInfo):
         :type country: str or unicode or None
         :type post_code: str or unicode or None
         :type email: str or unicode or None
-        :type client_id: str or unicode or int or None
+        :type client_id: str or unicode or None
         :type vat_tax_number: str or unicode or int or None
         :type phone: str or unicode or None
+        :type fiscal_regime: str or unicode or None
+        :type tax_responsibility: str or unicode or None
+        :type economic_activity: str or unicode or None
         """
         super(ClientInfo, self).__init__(name, street, city, state, country, post_code)
-        self.vat_tax_number = vat_tax_number
         self.email = email
         self.client_id = client_id
+        self.vat_tax_number = vat_tax_number
+        self.phone = phone
+        self.fiscal_regime = fiscal_regime
+        self.tax_responsibility = tax_responsibility
+        self.economic_activity = economic_activity
 
 
 class Item(object):
