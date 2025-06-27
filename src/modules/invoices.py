@@ -86,15 +86,8 @@ class Invoice(QWidget):
         self.fieldsLayout.setContentsMargins(0, 0, 0, 0)
         self.fieldsLayout.setSpacing(10)
 
-        # Combobox de cliente
-        self.client_combobox = QComboBox()
-        self.client_combobox.setPlaceholderText("Seleccione un cliente")
-        clients = s.get_client_by_id()
-
-        for client in clients:
-            self.client_combobox.addItem(f"{client[0]} - {client[1]}")
-        
-        self.client_combobox.setStyleSheet("""
+        # Estilo de combobox
+        combobox_styleSheet = """
             QComboBox {
                 border: 1px solid #ccc;
                 border-radius: 5px;
@@ -116,7 +109,25 @@ class Invoice(QWidget):
                 selection-background-color: #dcdcdc;
                 background-color: #ffffff;
             }
-        """)
+        """
+
+        # Combobox de cliente
+        self.client_combobox = QComboBox()
+        self.client_combobox.setPlaceholderText("Seleccione un cliente")
+        clients = s.get_client_by_id()
+
+        for client in clients:
+            self.client_combobox.addItem(f"{client[0]} - {client[1]}")
+        
+        self.client_combobox.setStyleSheet(combobox_styleSheet)
+
+        # Combobox de impuesto: Se elige si colocar impuesto de 4% o de 19%
+        self.tax_combobox = QComboBox()
+        self.tax_combobox.setPlaceholderText("Tipo de impuesto")
+        
+        ##TO-DO: ACTUALIZAR EL NOMBRE DE LOS TIPOS DE IMPUESTO
+        self.tax_combobox.addItems(("Impuesto 1 (4%)", "Impuesto 2 (19%)"))
+        self.tax_combobox.setStyleSheet(combobox_styleSheet)
 
         # Checkbox para marcar la factura como pagada
         self.paid_checkbox = QCheckBox("Marcar como pagado")
@@ -142,8 +153,10 @@ class Invoice(QWidget):
                 client_data = s.cur.execute(query).fetchone()
                 self.client_details_label.setText(f"ID: {client_data[0]}     Nombre: {client_data[1]}"
                                                   f"\nEmail: {client_data[2]}")
+
         self.client_combobox.currentIndexChanged.connect(update_client_details)
         self.fieldsLayout.addWidget(self.client_combobox, 1, 0, Qt.AlignLeft)
+        self.fieldsLayout.addWidget(self.tax_combobox, 6, 0, Qt.AlignLeft)
         self.invoiceLayout.addLayout(self.fieldsLayout)
     
     def initList(self):
@@ -242,7 +255,7 @@ class Invoice(QWidget):
                     if unit_label:
                         count = int(unit_label.text())
                     else:
-                        count = 1  # en caso que no se encuentre, se suma al menos 1
+                        count = 1  # en caso de que no se encuentre, se suma al menos 1
                     total += price * count
                     
         self.total_amount_label.setText(f"Total: ${total:.2f}")
@@ -254,10 +267,13 @@ class Invoice(QWidget):
 
         # Actualizar la combobox de clientes
         self.client_combobox.clear()
+
         clients = s.get_client_by_id()
         for client in clients:
             self.client_combobox.addItem(f"{client[0]} - {client[1]}")
         
+        self.tax_combobox.setCurrentIndex(-1)
+
         # Actualizar la tabla de productos usando Polars
         df = pl.read_database("SELECT id_producto, nombre, precio FROM producto;", s.conn)
         self.product_table.setRowCount(df.height)
@@ -388,7 +404,12 @@ class Invoice(QWidget):
                 doc.client_info = ClientInfo(**client_kwargs)
 
                 doc.service_provider_info = ServiceProviderInfo(name=service_provider_data[0], vat_tax_number=service_provider_data[1], street=service_provider_data[2], phone=service_provider_data[3], email=service_provider_data[4])
-                tax = 5
+                
+                tax = 0
+                
+                if self.tax_combobox.currentIndex() == 0: tax = 4
+                elif self.tax_combobox.currentIndex() == 1: tax = 19
+
                 doc.set_item_tax_rate(tax)
                 doc.set_bottom_tip("Gracias por su compra!")
 

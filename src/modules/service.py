@@ -238,7 +238,7 @@ class Service: # Clase que realiza la conexión a la DB
         return total if total is not None else 0.0
     
     def get_next_invoice_id(self):
-        self.cur.execute("SELECT id_factura FROM facturas ORDER BY id_factura DESC LIMIT 1")
+        self.cur.execute("SELECT id_factura FROM facturas WHERE id_factura LIKE 'FVER-%' ORDER BY CAST(SUBSTR(id_factura, 6) AS INTEGER) DESC LIMIT 1")
         last = self.cur.fetchone()
         if last and last[0] and last[0].startswith("FVER-"):
             try:

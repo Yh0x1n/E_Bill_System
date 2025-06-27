@@ -190,7 +190,6 @@ class MainWindow(QMainWindow):
         self.update_money_label = update_money_label.__get__(self)
         self.update_money_label()
 
-
     def createButtons(self):
         button = ButtonFactory()
 
